@@ -1,17 +1,15 @@
-## Variable file
+''' Variable file
+This file contains all variables used in the process. 
+Should be used in a wiser way, so the user can change some parameters like 
+NUM_LABELS or CODE_TYPE
+'''
 
 CODE_TYPE = 'QR'
 
-# DICT_KEYS = ['Equipment_model1','Equipment_model2','Equipment_model3','Equipment_model4',
-      #  'Serial_No1','Serial_No2','Serial_No3','Serial_No4',
-      # 'Work_End_Date1','Work_End_Date2','Work_End_Date3','Work_End_Date4']
-# DICT_KEYS = ['Equipment_model1','Serial_No1','Work_End_Date1', \
-#          'Equipment_model2','Serial_No2','Work_End_Date2', \
-#                  'Equipment_model3','Serial_No3','Work_End_Date3',\
-#                          'Equipment_model4','Serial_No4','Work_End_Date4',]
 DICT_KEYS = []
 
 NUM_LABELS = 4
+NUM_LABELS_AUX = 8
 
 XLS_PARAM = ["Equipment Model","Serial No", "Work End Date"]
 

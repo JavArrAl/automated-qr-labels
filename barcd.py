@@ -12,30 +12,53 @@ from barcode.writer import ImageWriter
 import qrcode
 
 
+class WrongXlFile(Exception):
+    pass
+
+class WrongDocxFile(Exception):
+    pass
+
+
 def readFile(xlFile, xlParms):
     ''' Reads the excelp file and creates a data frame with
     the parameters selected by the user. It discards the N/A rows by default
     '''
-    xlData = pd.read_excel(xlFile)
+    try:
+        xlData = pd.read_excel(xlFile)
+    except:
+        raise WrongXlFile
     xlData = xlData[xlParms]
     for param in xlParms:
         xlData = xlData[xlData[param].notnull()]
     return xlData
+
+def auxLabelWord(auxlblDoc,xlData,picPath,tempPath,paramFilt = 'Equipment Model', model = 'BODYGUARD 323'):
+    '''Invokes methods to create lables using only the models selected
+    '''
+    ## NOTE: This has not been tested.
+    lbs = variableFile.NUM_LABELS_AUX
+    xlData = xlData[xlData[paramFilt] == model]
+    for rows in range(0,len(xlData),lbs):
+        nameImg = createBarcode(xlData[rows:rows+lbs],picPath)
+        labelsWord(auxlblDoc,xlData[rows:rows+lbs],nameImg,rows,tempPath,'Aux_Templates')
  
 
-def labelsWord(lblDoc,xlData,nameImg,numTemp,tempPath):
+def labelsWord(lblDoc,xlData,nameImg,numTemp,tempPath,nameTmp = 'Templates'):
     ''' Creates a dictionary matching values from the excel introduced by the user
     to the tags in the docx template.
     '''
     ## TODO: Dynamic generation of table cells based on number of lbsl necessary.
 
-    doc = DocxTemplate(lblDoc)
+    try:
+        doc = DocxTemplate(lblDoc)
+    except:
+        raise WrongDocxFile
     vals = xlData.to_numpy().flatten()
     context = dict(zip(variableFile.DICT_KEYS,vals))
     doc.render(context)
     for pic in range(len(nameImg)):
         doc.replace_pic('Dummy{}.png'.format(pic+1),nameImg[pic])
-    doc.save('{}Templates{}.docx'.format(tempPath,numTemp))
+    doc.save('{}{}{}.docx'.format(tempPath,nameTmp,numTemp))
 
     
 
@@ -54,9 +77,6 @@ def createBarcode(xlData,picPath):
         ## REVIEW esto es super cutre, encontrar forma de hacerlo mas efectivo (maybe .tolist())
         for column in range(len(row)):
                 tempStr += str(row[column])
-          
-        tempStr2 = ';'.join(row)
-        print(tempStr2)
         if variableFile.CODE_TYPE == "Barcode": 
             barcode.get('code128',tempStr,writer=ImageWriter()).save('{}/BrcdPNG{}'.format(picPath,row[1]))
         elif variableFile.CODE_TYPE == "QR":
@@ -90,6 +110,7 @@ if __name__ == "__main__":
 
     xlParmsLIst(xlParms,lbs)
     xlData = readFile(xlFile, xlParms)
-    for rows in range(0,len(xlData),lbs):
-        nameImg = createBarcode(xlData[rows:rows+lbs],picPath)
-        #labelsWord(lblDoc,xlData[rows:rows+lbs],nameImg,rows,tempPath)
+    print(xlData)
+    # for rows in range(0,len(xlData),lbs):
+    #     nameImg = createBarcode(xlData[rows:rows+lbs],picPath)
+    #     labelsWord(lblDoc,xlData[rows:rows+lbs],nameImg,rows,tempPath)
