@@ -48,9 +48,16 @@ class XlFile:
         except:
             raise WrongXlFile
     
-    def selectColumns(self,xlParms,value = False):
-    #Receives the columns needed and returns those unique values
-        return self.xlData[xlParms]
+    def selectColumns(self,xlParms,filter = False,**kwargs):
+        '''
+        Receives the columns needed and returns those unique values.
+        If filter is active, receives two argumens 'column' and 'value' from interface
+        must be used in interface side. Defined by user or 'Equimpent model' and 'BODYGUARD 323' by default
+        '''
+        if not filter:
+            return self.xlData[xlParms]
+        elif filter:
+            return self.xlData[xlData[kwargs.get('column')] == kwargs.get('value')]
     
     # Unnecesary
     # def selectFlatColumns(self,xlParams):
