@@ -31,7 +31,64 @@ class WrongDocxFile(Exception):
 # This functon includes all functions of this script that are not in docx
 # inclu
 class XlFile:
-    pass
+    def __init__(self,pathFile):
+        self.pathFile = pathFile # File path of the docx template
+        self.readFile()
+
+        #This should be an automatic folder created to store de QR and
+        # destroyed after the application is closed.
+        # This should be probably located within collectionQRcode
+        self.pathPic = 'C:/Users/Javier/Documents/Projects/Docx Labels/QRpng/'
+
+    
+    def readFile(self):
+        try:
+            self.xlData = pd.read_excel(self.pathFile)
+            self.xlData = self.xlData[self.xlData.isnull().sum() == 0]
+        except:
+            raise WrongXlFile
+    
+    def selectColumns(self,xlParms,value = False):
+    #Receives the columns needed and returns those unique values
+        return self.xlData[xlParms]
+    
+    # Unnecesary
+    # def selectFlatColumns(self,xlParams):
+    #    return self.xlData[xlParams].to_numpy().flatten()
+
+        
+    def applyFilter(self,column,value = any):
+        '''Function that applies filter to excel selected column
+        based on paramteres employed by the user
+        '''
+        return self.xlData[xlData[column] == value]
+    
+    def createBarcode(self):
+        '''
+        Function that creates the QR codes after reading and cleaning the excel
+        '''
+        self.pathQR = []
+        for index,row in self.xlData.iterrows():
+            tempStr = ''
+            ## REVIEW last column is a timestamp, it should be date
+            ## REVIEW esto es super cutre, encontrar forma de hacerlo mas efectivo (maybe .tolist())
+            for column in range(len(row)):
+                    tempStr += str(row[column])
+            if variableFile.CODE_TYPE == "Barcode": 
+                barcode.get('code128',tempStr,writer=ImageWriter()).save('{}/BrcdPNG{}'.format(self.pathPic,row[1]))
+            elif variableFile.CODE_TYPE == "QR":
+                qr = qrcode.QRCode(version = None, error_correction = qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+                qr.add_data(tempStr)
+                img = qr.make_image()
+                self.pathQR.append('{}QR{}'.format(self.pathPic,index))
+                img.save('{}QR{}'.format(self.pathPic,index))
+        
+    def collectionQRcode(self,selection):
+        '''
+        Function that returns the necessary list of QR image paths
+        '''
+        pass
+
 
 ## TODO: Class that works as a template docx handler
 # - It will help manage all parameters related to the docx handler:
@@ -48,38 +105,56 @@ class DocxFile:
         self.numLbl = 0
         self.nameFile = '' # Name file wich could correspond to the template copied files
         self.pathFile = '' # File path of the docx template
-        self.objectFile = '' # Object file in case drag a drop works that way
         self.paramTmp = [] # Parameters required to populate the template.
-        self.xlFilt = '' # Value column excel
-        self.xlFilVals = [] # Value parameters excel column selected
+        self.xlFilt = '' # Column excel selected
+        self.xlFilVals = [] # Value to filter excel column selected
         self.xlClass = xlClass # XlClass which handles unique excel file
+        self.dictKeys = []
+        self.context = [] # Dictionary with values to look for in the templates
+        
+        # This should be created dinamicaly or selected by the user
+        self.tempPath = "C:/Users/Javier/Documents/Projects/Docx Labels/finalTemplates/"
 
     def readDocx(self):
         '''Function that reads the docx file 
         '''
+        try:
+            self.doc = DocxTemplate(lblDoc)
+        except:
+            raise WrongDocxFile
+        self.doc.render(self.context)
+        # TODO: someway to calculate numLbl
+        # TODO: someway to calculate paramTmp
+
+    def createDict(self):
+        for label in range(self.numLbl):
+            for param in self.paramTmp:
+                self.dictKeys.append('{}{}'.format(param.replace(' ','_'),label+1))
+        self.context = dict(zip(self.dictKeys,\
+            self.xlClass.selectColumns(self.paramTmp).to_numpy().flatten()))
     
-    def exclColumns(self):
-        '''Function that selects the excel columns corresponding
-        to the parameters within the docx template
-        '''
-        pass
-    
-    def excelFilter(self):
-        '''Function that applies filter to excel remaining columns
-        based on paramteres employed by the user
-        '''
-        pass
-    
-    def labelGeneration(self):
+    def labelGeneration(self,listQR,numTemp,nameTmp = 'Template'):
         '''Function that fills the template docxs
         '''
-        pass
+        self.doc.render(self.context)
+        for pic in range(len(listQR)):
+            self.doc.replace_pic('Dummy{}.png'.format(pic+1),self.listQR[pic])
+        self.doc.save('{}{}{}.docx'.format(self.tempPath,nameTmp,numTemp))
+        
     def labelGenLauncher(self):
         '''Calls labelGeneration function as many times as needed 
         depening on the length of the excel.
         It takes in consideration the number of labels per docx page
         '''
-        pass
+        ## TODO: think what to do with filtered things!!!!!!!!!
+        self.createDict()
+        self.listQR = self.xlClass.collectionQRcode(self.paramTmp,self.xlFilt)
+        for rows in range(0,len(self.xlClass.selectColumns()),self.numLbl):
+            self.labelGeneration(self.listQR[rows:rows+self.numLbl],rows)
+
+
+
+
 
 def readFile(xlFile, xlParms):
     ''' Reads the excelp file and creates a data frame with
@@ -93,16 +168,6 @@ def readFile(xlFile, xlParms):
     for param in xlParms:
         xlData = xlData[xlData[param].notnull()]
     return xlData
-
-
-## TODO: the docx label could be read here
-# It could do:
-# - obtain the number of cells (corresponding to the number of labels)
-# - Select desired columns from excel file (removes last for loop from readFile function)
-# - Applies filter to selected column, all parameters (column and row) selected by the user
-def readDocx(docFile):
-    pass
-
 
 ## TODO: This is transfered to the DocxFile class
 def auxLabelWord(auxlblDoc,xlData,picPath,tempPath,paramFilt = 'Equipment Model', model = 'BODYGUARD 323'):
