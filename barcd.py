@@ -1,13 +1,9 @@
 from docx import Document
 import pandas as pd
 import numpy as np
-import variableFile
 import re
 import os.path
 from docxtpl import DocxTemplate
-
-import barcode
-from barcode.writer import ImageWriter
 import qrcode
 import tempfile
 
@@ -144,14 +140,11 @@ class DocxFile:
         '''
         for index,row in self.xlDataCaller().iterrows():
             tempStr = ';'.join(map(str,row))
-            if variableFile.CODE_TYPE == "Barcode": 
-                barcode.get('code128',tempStr,writer=ImageWriter()).save('{}/BrcdPNG{}'.format(self.pathPic,row[1]))
-            elif variableFile.CODE_TYPE == "QR":
-                qr = qrcode.QRCode(version = None, error_correction = qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
-                qr.add_data(tempStr)
-                img = qr.make_image()
-                self.listQR.append('{}QR{}'.format(self.pathPic,index))
-                img.save('{}QR{}'.format(self.pathPic,index))   
+            qr = qrcode.QRCode(version = None, error_correction = qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+            qr.add_data(tempStr)
+            img = qr.make_image()
+            self.listQR.append('{}QR{}'.format(self.pathPic,index))
+            img.save('{}QR{}'.format(self.pathPic,index))   
 
     def setFilter(self,):
         '''Sets filter parameters.
