@@ -23,6 +23,9 @@ class WrongXlFile(Exception):
 class WrongDocxFile(Exception):
     pass
 
+class MissingXlFile(Exception):
+    pass
+
 
 class XlFile:
     def __init__(self,pathFile):
@@ -72,6 +75,7 @@ class DocxFile:
         self.tempFoldQR = tempfile.TemporaryDirectory()
         self.pathPic = self.tempFoldQR.name
 
+        if not xlClass: raise MissingXlFile
         self.readDocx()
 
     def xlDataCaller(self):
@@ -146,7 +150,7 @@ class DocxFile:
             self.listQR.append('{}QR{}'.format(self.pathPic,index))
             img.save('{}QR{}'.format(self.pathPic,index))   
 
-    def setFilter(self,):
+    def setFilter(self):
         '''Sets filter parameters.
         Invoked by interface?
         ''' 
