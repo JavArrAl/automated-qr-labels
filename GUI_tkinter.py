@@ -54,8 +54,11 @@ class LabelFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.xlFrame = ExcelFrame(self)
         self.docxFrame = DocxFrame(self,self.xlFrame)
-        self.genFrame = GenerateFrame(self,self.docxFrame.classFile)
+        self.genFrame = GenerateFrame(self)
         self.pack(fill = 'both')
+    
+    def giveDocxClass(self):
+        return self.docxFrame.classFile
 
 
         
@@ -63,31 +66,57 @@ class LabelFrame(tk.Frame):
 class ExcelFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
+        self.classFile = None
         self.filtVar = tk.BooleanVar()
         self.xlFile = FileFrame(self,0,'Select excel file',(('Excel file','*.xlsx'),('Excel file', '*.xls'),('All files','*.*'),))
         self.filtFrame = FilterFrame(self)
         self.filterButton = tk.Checkbutton(self, text = 'Filter', variable = self.filtVar, onvalue = True, offvalue = False, command = lambda: self.filtFrame.showFilter(self.filtVar,self))
 
-
         self.pack(fill = 'x')
         #self.filterButton.pack()
+    
+    
+    def storeClassFile(self,classFile):
+        self.classFile = classFile
 
 
 class DocxFrame(tk.Frame):
     def __init__(self,myParent,xlClass):
         tk.Frame.__init__(self,myParent)
+        self.classFile = None
         self.docxFile = FileFrame(self,1,'Select Docx file',(('word files','*.docx'),('All files','*.*'),),xlClass)
-        self.classFile = self.docxFile.returnClass()
+        #self.classFile = self.docxFile.returnClass()
         self.pack(fill='x')
 
+    def storeClassFile(self,classFile):
+        self.classFile = classFile
+
+
+class GenerateFrame(tk.Frame):
+    def __init__(self,myParent):
+        tk.Frame.__init__(self,myParent)
+        self.myParent = myParent
+        self.gnrBtt = tk.Button(self, text = 'Generate labels', command = lambda: self.generateLbs(), bg = 'orange')
+        self.gnrLbl = tk.Label(self, text = 'Click on the button to generate the labels')
+
+        self.pack(fill='x')
+        self.gnrLbl.pack(side = 'left', anchor = 'w')
+        self.gnrBtt.pack(side = 'right', anchor = 'w')
+    
+    def generateLbs(self):
+        docxClass = self.getDocxClass()
+        docxClass.labelGenLauncher()
+    
+    def getDocxClass(self):
+        return self.myParent.giveDocxClass()
 
 class FileFrame(tk.Frame):
-    # REVIEW: classFile remain as None despite the function fileBtw referencing an object on it.
     def __init__(self,myParent,classType,lblText,fileTypes,xlClass = None):
         tk.Frame.__init__(self,myParent)
+        self.myParent = myParent
+        self.classFile = None
         ## TODO: the entry is just representing the file, If text displayed by the user is corrected, it should be taken as filepath
         self.filePath = ''
-        self.classFile = None
         self.tmpBtt = tk.Button(self, text = 'Browse', command = lambda: self.fileBtw(classType,fileTypes,xlClass))
         self.file = ttk.Entry(self,textvariable = self.filePath,width = 60)
         self.frameLbl = ttk.Label(self,text=lblText)
@@ -110,8 +139,10 @@ class FileFrame(tk.Frame):
             self.errLbl['text'] = ''
             if classType == 0:
                 self.classFile = barcd.XlFile(self.filePath)
+                self.myParent.storeClassFile(self.classFile)
             elif classType == 1:
-                self.classFile = barcd.DocxFile(self.filePath,xlClass)
+                self.classFile = barcd.DocxFile(self.filePath,xlClass.classFile)
+                self.myParent.storeClassFile(self.classFile)
 
         except barcd.WrongXlFile:
             self.filePath = ''
@@ -126,26 +157,7 @@ class FileFrame(tk.Frame):
         except barcd.MissingXlFile:
             self.errLbl['text'] = 'Please insert excel file first'
             self.file.delete(0,last = tk.END)
-            self.file.insert(0,self.filePath)
-    
-    def returnClass(self):
-        return self.classFile
-
-class GenerateFrame(tk.Frame):
-    def __init__(self,myParent,docxClass):
-        tk.Frame.__init__(self,myParent)
-        self.docxClass = docxClass
-        self.gnrBtt = tk.Button(self, text = 'Generate labels', command = lambda: self.generateLbs(self.docxClass), bg = 'orange')
-        self.gnrLbl = tk.Label(self, text = 'Click on the button to generate the labels')
-
-        self.pack(fill='x')
-        self.gnrLbl.pack(side = 'left', anchor = 'w')
-        self.gnrBtt.pack(side = 'right', anchor = 'w')
-    
-    def generateLbs(self,docxClass):
-        print(docxClass)
-        docxClass.labelGenLauncher()
-        
+            self.file.insert(0,self.filePath)   
 
 
 class FolderFrame(tk.Frame):

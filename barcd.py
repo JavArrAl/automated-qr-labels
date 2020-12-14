@@ -43,13 +43,22 @@ class XlFile:
         Receives the columns needed and returns those unique values.
         If filter is active, receives two argumens 'column' and 'value' from calling class
         Defined by user or 'Equimpent model' and 'BODYGUARD 323' by default
+        Columns with Timestamp are filtered so they contain date only, formated as DD/MM/YY
         '''
         assert type(xlParms) == list, "xlParms should be list"
         if not filter:
-            return self.xlData[xlParms].dropna(subset = xlParms)
+            xlData = self.xlData[xlParms].dropna(subset = xlParms)
+            for column in xlData:
+                if xlData[column].dtype == '<M8[ns]':
+                    xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
+            return xlData
         elif filter:
-            xlTemp = self.xlData[self.xlData[kwargs.get('column')] == kwargs.get('value')]
-            return xlTemp[xlParms].dropna(subset = xlParms)
+            xlData = self.xlData[self.xlData[kwargs.get('column')] == kwargs.get('value')]
+            xlData[xlParms].dropna(subset = xlParms)
+            for column in xlData:
+                if xlData[column].dtype == '<M8[ns]':
+                    xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
+            return xlData
 
 
 class DocxFile:
@@ -110,7 +119,9 @@ class DocxFile:
                 self.dictKeys.append('{}{}'.format(param.replace(' ','_'),inx))
             inx += 1
             if inx > self.numLbl: inx = 1
-        self.filtIndx = self.xlDataCaller().index
+        #self.xlData = self.xlDataCaller()
+        # TODO: change from YY/MM/DD Tto DD/MM/YY
+        # TODO: remove time from timestamp
         self.context = list(zip(self.dictKeys,self.xlDataCaller().to_numpy().flatten()))
     
     def labelGeneration(self,listQR,numTemp,localContext,nameTmp = 'Template'):
