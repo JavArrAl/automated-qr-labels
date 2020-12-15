@@ -48,22 +48,25 @@ class XlFile:
         assert type(xlParms) == list, "xlParms should be list"
         if not filter:
             xlData = self.xlData[xlParms].dropna(subset = xlParms)
-            for column in xlData:
-                if xlData[column].dtype == '<M8[ns]':
-                    xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
-            return xlData
         elif filter:
             xlData = self.xlData[self.xlData[kwargs.get('column')] == kwargs.get('value')]
-            xlData[xlParms].dropna(subset = xlParms)
-            for column in xlData:
-                if xlData[column].dtype == '<M8[ns]':
-                    xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
-            return xlData
+            xlData = xlData[xlParms].dropna(subset = xlParms)
+
+        for column in xlData:
+            if xlData[column].dtype == '<M8[ns]':
+                xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
+        
+        return xlData
+    
+    def returnColumns(self):
+        return list(self.xlData.columns)
+    
+    def returnValues(self,column):
+        return list(set(self.xlData[column]))
 
 
 class DocxFile:
     def __init__(self,pathFile,xlClass):
-        #self.numLbl = 0
         self.nameFile = '' # Name file wich could correspond to the template copied files
         self.pathFile = pathFile # File path of the docx template
         # NOTE: list order not corresponding to actual order on excel file.
@@ -77,9 +80,7 @@ class DocxFile:
         self.dictKeys = []
         self.context = [] # Dictionary with values to populatein the templates
         self.listQR = []
-        
-        # This should be created dinamicaly or selected by the user
-        self.tempPath = "C:/Users/Javier/Documents/Projects/Docx Labels/finalTemplates/"
+
         # Automatic QR folder creation and destruction.
         self.tempFoldQR = tempfile.TemporaryDirectory()
         self.pathPic = self.tempFoldQR.name
@@ -119,9 +120,6 @@ class DocxFile:
                 self.dictKeys.append('{}{}'.format(param.replace(' ','_'),inx))
             inx += 1
             if inx > self.numLbl: inx = 1
-        #self.xlData = self.xlDataCaller()
-        # TODO: change from YY/MM/DD Tto DD/MM/YY
-        # TODO: remove time from timestamp
         self.context = list(zip(self.dictKeys,self.xlDataCaller().to_numpy().flatten()))
     
     def labelGeneration(self,listQR,numTemp,localContext,nameTmp = 'Template'):
@@ -142,12 +140,18 @@ class DocxFile:
         '''
         self.createBarcode()
         self.createDict()
+        try:
+            os.mkdir(os.path.expanduser('~\\Desktop\\QR_Templates'))
+            self.tempPath = os.path.expanduser('~\\Desktop\\QR_Templates\\')
+        except FileExistsError:
+            self.tempPath = os.path.expanduser('~\\Desktop\\QR_Templates\\')
         ini = 0
         for rows in range(0,len(self.xlDataCaller()),self.numLbl):
             fin = ini +(self.numLbl*len(self.paramTmp))
             self.labelGeneration(self.listQR[rows:rows+self.numLbl],
                 rows,dict(self.context[ini:fin]))
             ini = fin
+            self.upgradePB(self.numLbl)
 
     def createBarcode(self):
         '''
@@ -168,15 +172,19 @@ class DocxFile:
         # TODO: develop function that changes filter parameters.
         pass
 
+    # Functions to update progressbar.
+    def savePB(self,frame):
+        self.progBar = frame
+    
+    def upgradePB(self,step):
+        self.progBar.prgBar['value'] += step
+
 
 if __name__ == "__main__":
     
-    ## TODO This parameters could be given by the user through the interface in a future
-    ## TODO: include selection multiple fields to create label 
+
     xlFile = "C:/Users/Javier/Documents/Projects/Docx Labels/Originals/" + "tmpBD1B.xls"
     lblDoc = "C:/Users/Javier/Documents/Projects/Docx Labels/Originals/" + "LabelsJavi2.docx"
-    tempPath = "C:/Users/Javier/Documents/Projects/Docx Labels/finalTemplates/"
-
 
     excel = XlFile(xlFile)
     docx = DocxFile(lblDoc,excel)
