@@ -1,11 +1,12 @@
+import variableFile
+import os
+import threading
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from PIL import Image, ImageTk
-import variableFile
-import os
+
 import barcd
-import threading
 
 '''Labels application interface. Main tree:
 tk
@@ -69,7 +70,10 @@ class ExcelFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
         self.classFile = None
-        self.xlFile = FileFrame(self,0,'Select excel file',(('Excel file','*.xlsx'),('Excel file', '*.xls'),('All files','*.*'),))
+        self.xlFile = FileFrame(
+            self,0,'Select excel file',
+            (('Excel file','*.xlsx'),('Excel file', '*.xls'),
+            ('All files','*.*'),))
         self.filtFrame = FilterFrame(self)
 
         self.pack(fill = 'x')
@@ -85,7 +89,10 @@ class DocxFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
         self.classFile = None
-        self.docxFile = FileFrame(self,1,'Select Docx file',(('word files','*.docx'),('All files','*.*'),),xlClass)
+        self.docxFile = FileFrame(
+            self,1,'Select Docx file',
+            (('word files','*.docx'),('All files','*.*'),),
+            xlClass)
         self.pack(fill='x')
 
     def storeClassFile(self,classFile):
@@ -98,9 +105,15 @@ class GenerateFrame(tk.Frame):
         self.myParent = myParent
         self.topFrame = tk.Frame(self)
         self.botFrame = tk.Frame(self)
-        self.gnrBtt = tk.Button(self.topFrame, text = 'Generate labels', command = lambda: self.generateLbs(), bg = 'orange')
-        self.gnrLbl = tk.Label(self.topFrame, text = 'Click on the button to generate the labels')
-        self.locFolder = tk.Label(self.botFrame, text = 'Labels stored in QR_Template folder in Desktop', state = tk.DISABLED)
+        self.gnrBtt = tk.Button(
+            self.topFrame, text = 'Generate labels',
+            command = lambda: self.generateLbs(),
+            bg = 'orange')
+        self.gnrLbl = tk.Label(
+            self.topFrame, text = 'Click on the button to generate the labels')
+        self.locFolder = tk.Label(
+            self.botFrame, text = 'Labels stored in QR_Template folder in Desktop',
+            state = tk.DISABLED)
 
 
         self.pack(fill='x')
@@ -121,7 +134,10 @@ class GenerateFrame(tk.Frame):
     def createPB(self):
         # TODO: fix progressBar. "function object has no attribute 'xlDataCaller"
         self.totTmp = len(self.myParent.giveDocxClass.xlDataCaller())/len(self.myParent.giveDocxClass.paramTmp)
-        self.prgBar = ttk.Progressbar(self.botFrame,orient = tk.HORIZONTAL, length = 400, mode = 'determinate', value = 0, maximum = self.totTmp)
+        self.prgBar = ttk.Progressbar(
+            self.botFrame,orient = tk.HORIZONTAL,
+            length = 400, mode = 'determinate',
+            value = 0, maximum = self.totTmp)
         self.myParent.giveDocxClass.savePB(self)
         self.prgBar.pack(side = 'left')
     
@@ -134,7 +150,9 @@ class FileFrame(tk.Frame):
         self.classFile = None
         ## TODO: the entry is just representing the file, If text displayed by the user is corrected, it should be taken as filepath
         self.filePath = ''
-        self.tmpBtt = tk.Button(self, text = 'Browse', command = lambda: self.fileBtw(classType,fileTypes,xlClass))
+        self.tmpBtt = tk.Button(
+            self, text = 'Browse',
+            command = lambda: self.fileBtw(classType,fileTypes,xlClass))
         self.file = ttk.Entry(self,textvariable = self.filePath,width = 60)
         self.frameLbl = ttk.Label(self,text=lblText)
         self.errLbl = tk.Label(self,text ='',height = 1)
@@ -162,6 +180,7 @@ class FileFrame(tk.Frame):
                 self.classFile = barcd.DocxFile(self.filePath,xlClass.classFile)
                 self.myParent.storeClassFile(self.classFile)
                 self.myParent.granpa.genFrame.createPB()
+                self.myParent.filtFrame.smpFiltBtt['state'] = tk.ACTIVE
 
         except barcd.WrongXlFile:
             self.filePath = ''
@@ -187,22 +206,37 @@ class FolderFrame(tk.Frame):
         #self.pack(fill='x', expand=True)
 
 class FilterFrame(tk.Frame):
-    # TODO: filter button should be active only when there is an excel loaded.
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.myParent = myParent
         self.filtVar = True
         self.smpFltBtt = False
         self.bttFrame = tk.Frame(self)
-        self.filterButton = tk.Checkbutton(self.bttFrame, text = 'Filter                 ', variable = self.filtVar, onvalue = True, offvalue = False, command = lambda: self.showFilter(self.filtVar), state = tk.DISABLED)
-        self.smpFiltBtt = tk.Checkbutton(self.bttFrame, text = 'Template \n parameters', variable = self.smpFltBtt, onvalue = True, offvalue = False, state = tk.DISABLED)
+        self.filterButton = tk.Checkbutton(
+            self.bttFrame, text = 'Filter                 ',
+            variable = self.filtVar, onvalue = True,
+            offvalue = False, command = lambda: self.showFilter(self.filtVar),
+            state = tk.DISABLED)
+        # TODO: 
+        self.smpFiltBtt = tk.Checkbutton(
+            self.bttFrame, text = 'Template \n parameters',
+            variable = self.smpFltBtt, onvalue = True,
+            offvalue = False, command = lambda: self.simplyFilter(),
+            state = tk.DISABLED)
 
 
         self.filterFrame = tk.Frame(self)
+        self.filterFrame.bind('<Enter>', self.filterFrame.focus_set())
         self.barListParms = tk.Scrollbar(self.filterFrame)
         self.barListValues = tk.Scrollbar(self.filterFrame)
-        self.listParms = tk.Listbox(self.filterFrame,selectmode = 'browse', yscrollcommand = self.barListParms.set, )
-        self.listValues = tk.Listbox(self.filterFrame, selectmode = 'browse', yscrollcommand = self.barListValues.set)
+        self.listParms = tk.Listbox(
+            self.filterFrame,selectmode = 'browse',
+            yscrollcommand = self.barListParms.set,
+            exportselection = 0)
+        self.listValues = tk.Listbox(
+            self.filterFrame, selectmode = 'browse',
+            yscrollcommand = self.barListValues.set,
+            exportselection = 0)
         self.barListValues.config(command = self.listValues.yview)
         self.barListParms.config(command = self.listParms.yview)
 
@@ -211,8 +245,8 @@ class FilterFrame(tk.Frame):
         self.filterButton.pack(anchor = 'w', fill = 'x')
         self.smpFiltBtt.pack(side = 'bottom',anchor = 'sw', after = self.filterButton)
 
-        # TODO: binding not working. Fix.
-        self.listParms.bind('<<ListboxSelect>>',self.choosenColumn())
+        self.listParms.bind('<<ListboxSelect>>', self.choosenColumn)
+        self.listValues.bind('<<ListboxSelect>>', self.choosenValue)
 
     def showFilter(self, filtVar):
         if filtVar:
@@ -238,23 +272,24 @@ class FilterFrame(tk.Frame):
 
         
 
-    def choosenColumn(self):
+    def choosenColumn(self,event):
         '''This function returns the value selected by the user on listParms
         and uses it to present the values on listValues
         '''
-        # TODO: not working. Fix.
-        #self.values = self.myParent.classFile.returnValues(self.listParms.curselection())
-        #for value in self.values:
-        #    self.listValues.insert(tk.END, value)
+        self.listValues.delete(0,tk.END)
+        self.values = self.myParent.classFile.returnValues(self.params[self.listParms.curselection()[0]])
+        for value in self.values:
+            self.listValues.insert(tk.END, value)
+        
+    def choosenValue(self,event):
+        # TODO: what to do with the selected value
         pass
 
-        
-        
-    
+    def simplyFilter(self):
+        # TODO: reduce values to those from the template
+        pass
+
     def filterOptions(self,filtVar):
-        # REVIEW: this is not correctly implemented
-        # NOTE: think using a list instead of buttons, sorter.
-        # REVIEW: Not deleting a
         if filtVar:
             self.filterFrame.pack(side = 'right')
             self.populateLists()

@@ -1,11 +1,11 @@
-from docx import Document
-import pandas as pd
-import numpy as np
+import tempfile
 import re
 import os.path
+import pandas as pd
+import numpy as np
+from docx import Document
 from docxtpl import DocxTemplate
 import qrcode
-import tempfile
 
 '''
 Code that contains the main backend classes and function of the LabelCode
@@ -62,7 +62,7 @@ class XlFile:
         return list(self.xlData.columns)
     
     def returnValues(self,column):
-        return list(set(self.xlData[column]))
+        return list(set(self.xlData[column].dropna()))
 
 
 class DocxFile:
@@ -90,8 +90,8 @@ class DocxFile:
 
     def xlDataCaller(self):
         return self.xlClass.selectColumns(
-                    self.paramTmp,self.filt,column = self.xlFilt, value = self.xlFilVals
-                        )
+            self.paramTmp,self.filt,
+            column = self.xlFilt, value = self.xlFilVals)
 
     def readDocx(self):
         '''Function that reads the docx file
@@ -159,7 +159,9 @@ class DocxFile:
         '''
         for index,row in self.xlDataCaller().iterrows():
             tempStr = ';'.join(map(str,row))
-            qr = qrcode.QRCode(version = None, error_correction = qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+            qr = qrcode.QRCode(
+                version = None, error_correction = qrcode.constants.ERROR_CORRECT_L,
+                box_size=10, border=4)
             qr.add_data(tempStr)
             img = qr.make_image()
             self.listQR.append('{}QR{}'.format(self.pathPic,index))
