@@ -63,13 +63,14 @@ class LabelFrame(tk.Frame):
         return self.docxFrame.classFile
 
 
+
         
 
 class ExcelFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
-        self.classFile = None
+        self.classFile = None # Reference barcd.py class created
         self.xlFile = FileFrame(
             self,0,'Select excel file',
             (('Excel file','*.xlsx'),('Excel file', '*.xls'),
@@ -88,7 +89,7 @@ class DocxFrame(tk.Frame):
     def __init__(self,myParent,xlClass):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
-        self.classFile = None
+        self.classFile = None # Reference barcd.py class created
         self.docxFile = FileFrame(
             self,1,'Select Docx file',
             (('word files','*.docx'),('All files','*.*'),),
@@ -179,8 +180,8 @@ class FileFrame(tk.Frame):
             elif classType == 1:
                 self.classFile = barcd.DocxFile(self.filePath,xlClass.classFile)
                 self.myParent.storeClassFile(self.classFile)
-                self.myParent.granpa.genFrame.createPB()
-                self.myParent.filtFrame.smpFiltBtt['state'] = tk.ACTIVE
+                #self.myParent.granpa.genFrame.createPB()
+                self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.ACTIVE
 
         except barcd.WrongXlFile:
             self.filePath = ''
@@ -210,58 +211,63 @@ class FilterFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.myParent = myParent
         self.filtVar = True
-        self.smpFltBtt = False
+        self.stateSmpFilt = True
         self.bttFrame = tk.Frame(self)
         self.filterButton = tk.Checkbutton(
-            self.bttFrame, text = 'Filter                 ',
+            self.bttFrame, text = 'Filter\t\t\t',
             variable = self.filtVar, onvalue = True,
             offvalue = False, command = lambda: self.showFilter(self.filtVar),
             state = tk.DISABLED)
-        # TODO: 
         self.smpFiltBtt = tk.Checkbutton(
             self.bttFrame, text = 'Template \n parameters',
-            variable = self.smpFltBtt, onvalue = True,
-            offvalue = False, command = lambda: self.simplyFilter(),
+            variable = self.stateSmpFilt,
+            command = lambda: self.simplyFilter(self.stateSmpFilt),
             state = tk.DISABLED)
 
 
         self.filterFrame = tk.Frame(self)
-        self.filterFrame.bind('<Enter>', self.filterFrame.focus_set())
         self.barListParms = tk.Scrollbar(self.filterFrame)
         self.barListValues = tk.Scrollbar(self.filterFrame)
         self.listParms = tk.Listbox(
-            self.filterFrame,selectmode = 'browse',
+            self.filterFrame,selectmode = 'single',
             yscrollcommand = self.barListParms.set,
             exportselection = 0)
         self.listValues = tk.Listbox(
-            self.filterFrame, selectmode = 'browse',
+            self.filterFrame, selectmode = 'multiple',
             yscrollcommand = self.barListValues.set,
             exportselection = 0)
         self.barListValues.config(command = self.listValues.yview)
         self.barListParms.config(command = self.listParms.yview)
-
         self.pack(fill = 'x',side = 'left')
         self.bttFrame.pack(side = 'left')
         self.filterButton.pack(anchor = 'w', fill = 'x')
         self.smpFiltBtt.pack(side = 'bottom',anchor = 'sw', after = self.filterButton)
 
+        # Binding
         self.listParms.bind('<<ListboxSelect>>', self.choosenColumn)
         self.listValues.bind('<<ListboxSelect>>', self.choosenValue)
 
     def showFilter(self, filtVar):
         if filtVar:
+            self.myParent.classFile.filt = True # Activates the filter on barcd.py
             self.filterOptions(filtVar)
             self.filtVar = False
         else:
+            self.myParent.classFile.filt = False
             self.filterOptions(filtVar)
             self.filtVar = True
+            self.listValues.delete(0,tk.END)
 
-    def populateLists(self):
+
+    def populateLists(self,smply = False):
         '''Creates lists of values to filter. Firts the possible excel columns
         then the values of the column selected.
         '''
         self.listParms.delete(0,tk.END)
-        self.params = self.myParent.classFile.returnColumns()
+        if not smply:
+            self.params = self.myParent.classFile.returnColumns()
+        if smply:
+            self.params = self.myParent.granpa.docxFrame.classFile.paramTmp # Template column parameters
         for param in self.params:
             self.listParms.insert(tk.END, param)              
 
@@ -270,31 +276,39 @@ class FilterFrame(tk.Frame):
         self.barListParms.pack(side = 'right', fill = 'both')
         self.listParms.pack(side = 'right')  
 
-        
-
     def choosenColumn(self,event):
         '''This function returns the value selected by the user on listParms
         and uses it to present the values on listValues
         '''
         self.listValues.delete(0,tk.END)
-        self.values = self.myParent.classFile.returnValues(self.params[self.listParms.curselection()[0]])
+        self.filtCol = self.listParms.curselection()[0]
+        self.values = self.myParent.classFile.returnValues(self.params[self.filtCol])
         for value in self.values:
             self.listValues.insert(tk.END, value)
         
     def choosenValue(self,event):
         # TODO: what to do with the selected value
-        pass
-
-    def simplyFilter(self):
-        # TODO: reduce values to those from the template
-        pass
-
+        temp = list(self.listValues.curselection())
+        self.filtVal = [self.values[val] for val in temp] # Selected values from filt column
+        self.myParent.classFile.setFilter(self.filtCol,self.filtVal)
+    
+    def simplyFilter(self,state):
+        # TODO: fix this when you clear your head
+        # Nothing is working as it should
+        if state:
+            self.populateLists(True)
+            self.stateSmpFilt = False
+        elif not self.stateSmpFilt:
+            self.populateLists()
+            self.stateSmpFilt = True
+        
     def filterOptions(self,filtVar):
         if filtVar:
             self.filterFrame.pack(side = 'right')
             self.populateLists()
         else:
             self.filterFrame.pack_forget()
+            self.values = None
     
     
 

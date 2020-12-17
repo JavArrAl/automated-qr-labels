@@ -30,7 +30,11 @@ class MissingXlFile(Exception):
 class XlFile:
     def __init__(self,pathFile):
         self.pathFile = pathFile # File path of the docx template
+        self.filt = False
+        self.xlFilt = ''
+        self.xlFiltVals = []
         self.readFile()
+
     
     def readFile(self):
         try:
@@ -38,18 +42,24 @@ class XlFile:
         except:
             raise WrongXlFile
     
-    def selectColumns(self,xlParms,filter = False,**kwargs):
+    # def selectColumns(self,xlParms,filter = False,**kwargs):
+    def selectColumns(self,xlParms):
         '''
         Receives the columns needed and returns those unique values.
         If filter is active, receives two argumens 'column' and 'value' from calling class
         Defined by user or 'Equimpent model' and 'BODYGUARD 323' by default
         Columns with Timestamp are filtered so they contain date only, formated as DD/MM/YY
         '''
+        # TODO: Check N/A groups. dropna not working on 'Equipment Model'
         assert type(xlParms) == list, "xlParms should be list"
-        if not filter:
+        # if not filter:
+        if not self.filt:
             xlData = self.xlData[xlParms].dropna(subset = xlParms)
-        elif filter:
-            xlData = self.xlData[self.xlData[kwargs.get('column')] == kwargs.get('value')]
+        # elif filter:
+        elif self.filt:
+            # xlData = self.xlData[self.xlData[kwargs.get('column')] == kwargs.get('value')]
+            # xlData = xlData[xlParms].dropna(subset = xlParms)
+            xlData = self.xlData[self.xlData[self.xlFilt].isin(self.xlFiltVals)]
             xlData = xlData[xlParms].dropna(subset = xlParms)
 
         for column in xlData:
@@ -63,6 +73,17 @@ class XlFile:
     
     def returnValues(self,column):
         return list(set(self.xlData[column].dropna()))
+
+
+    def setFilter(self,column,values):
+        '''Sets filter parameters.
+        This shouldn't be here. This should be placed on the DocxFile class
+        However, filter linked to excel on interface.
+        Easier to keep it here and duplicate values
+        ''' 
+        self.xlFilt = self.xlData.columns[column]
+        self.xlFiltVals = values
+    
 
 
 class DocxFile:
@@ -81,17 +102,19 @@ class DocxFile:
         self.context = [] # Dictionary with values to populatein the templates
         self.listQR = []
 
-        # Automatic QR folder creation and destruction.
-        self.tempFoldQR = tempfile.TemporaryDirectory()
-        self.pathPic = self.tempFoldQR.name
-
-        if not xlClass: raise MissingXlFile
+        if not xlClass:
+            raise MissingXlFile
         self.readDocx()
 
     def xlDataCaller(self):
+        # self.filt = self.xlClass.filt
+        # self.xlFilt = self.xlClass.xlFilt
+        # self.xlFilVals = self.xlClass.xlFilVals
+        # return self.xlClass.selectColumns(
+        #     self.paramTmp,self.filt,
+        #     column = self.xlFilt, value = self.xlFilVals)
         return self.xlClass.selectColumns(
-            self.paramTmp,self.filt,
-            column = self.xlFilt, value = self.xlFilVals)
+            self.paramTmp)
 
     def readDocx(self):
         '''Function that reads the docx file
@@ -138,6 +161,9 @@ class DocxFile:
         depening on the length of the excel.
         It takes in consideration the number of labels per docx page
         '''
+        # Automatic QR folder creation and destruction.
+        self.tempFoldQR = tempfile.TemporaryDirectory()
+        self.pathPic = self.tempFoldQR.name + '\\'
         self.createBarcode()
         self.createDict()
         try:
@@ -151,7 +177,11 @@ class DocxFile:
             self.labelGeneration(self.listQR[rows:rows+self.numLbl],
                 rows,dict(self.context[ini:fin]))
             ini = fin
-            self.upgradePB(self.numLbl)
+            #self.upgradePB(self.numLbl)
+
+        # Necessary for a proper functioning
+        self.tempFoldQR.cleanup()
+        self.listQR = []
 
     def createBarcode(self):
         '''
@@ -166,13 +196,6 @@ class DocxFile:
             img = qr.make_image()
             self.listQR.append('{}QR{}'.format(self.pathPic,index))
             img.save('{}QR{}'.format(self.pathPic,index))   
-
-    def setFilter(self):
-        '''Sets filter parameters.
-        Invoked by interface?
-        ''' 
-        # TODO: develop function that changes filter parameters.
-        pass
 
     # Functions to update progressbar.
     def savePB(self,frame):
