@@ -116,7 +116,6 @@ class GenerateFrame(tk.Frame):
             self.botFrame, text = 'Labels stored in QR_Template folder in Desktop',
             state = tk.DISABLED)
 
-
         self.pack(fill='x')
         self.topFrame.pack(side = 'top', fill = 'x')
         self.botFrame.pack(side = 'bottom', fill = 'x')
@@ -211,7 +210,7 @@ class FilterFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.myParent = myParent
         self.filtVar = True
-        self.stateSmpFilt = True
+        self.stateSmpFilt = tk.BooleanVar()
         self.bttFrame = tk.Frame(self)
         self.filterButton = tk.Checkbutton(
             self.bttFrame, text = 'Filter\t\t\t',
@@ -220,8 +219,8 @@ class FilterFrame(tk.Frame):
             state = tk.DISABLED)
         self.smpFiltBtt = tk.Checkbutton(
             self.bttFrame, text = 'Template \n parameters',
-            variable = self.stateSmpFilt,
-            command = lambda: self.simplyFilter(self.stateSmpFilt),
+            variable = self.stateSmpFilt, onvalue = True,
+            offvalue = False, command = lambda: self.simplyFilter(),
             state = tk.DISABLED)
 
 
@@ -281,32 +280,30 @@ class FilterFrame(tk.Frame):
         and uses it to present the values on listValues
         '''
         self.listValues.delete(0,tk.END)
-        self.filtCol = self.listParms.curselection()[0]
+        self.filtCol = self.listParms.curselection()[0] # Index column read from template
         self.values = self.myParent.classFile.returnValues(self.params[self.filtCol])
         for value in self.values:
             self.listValues.insert(tk.END, value)
         
     def choosenValue(self,event):
         # TODO: what to do with the selected value
-        temp = list(self.listValues.curselection())
+        temp = list(self.listValues.curselection()) # Returns indexes
         self.filtVal = [self.values[val] for val in temp] # Selected values from filt column
-        self.myParent.classFile.setFilter(self.filtCol,self.filtVal)
+        self.myParent.classFile.setFilter(self.params[self.filtCol],self.filtVal)
     
-    def simplyFilter(self,state):
-        # TODO: fix this when you clear your head
-        # Nothing is working as it should
-        if state:
+    def simplyFilter(self):
+        if self.stateSmpFilt.get():
             self.populateLists(True)
-            self.stateSmpFilt = False
-        elif not self.stateSmpFilt:
+        elif not self.stateSmpFilt.get():
             self.populateLists()
-            self.stateSmpFilt = True
         
     def filterOptions(self,filtVar):
         if filtVar:
             self.filterFrame.pack(side = 'right')
             self.populateLists()
         else:
+            self.listParms.delete(0,tk.END)
+            self.smpFiltBtt.toggle()
             self.filterFrame.pack_forget()
             self.values = None
     

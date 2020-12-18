@@ -42,7 +42,6 @@ class XlFile:
         except:
             raise WrongXlFile
     
-    # def selectColumns(self,xlParms,filter = False,**kwargs):
     def selectColumns(self,xlParms):
         '''
         Receives the columns needed and returns those unique values.
@@ -57,8 +56,6 @@ class XlFile:
             xlData = self.xlData[xlParms].dropna(subset = xlParms)
         # elif filter:
         elif self.filt:
-            # xlData = self.xlData[self.xlData[kwargs.get('column')] == kwargs.get('value')]
-            # xlData = xlData[xlParms].dropna(subset = xlParms)
             xlData = self.xlData[self.xlData[self.xlFilt].isin(self.xlFiltVals)]
             xlData = xlData[xlParms].dropna(subset = xlParms)
 
@@ -81,17 +78,14 @@ class XlFile:
         However, filter linked to excel on interface.
         Easier to keep it here and duplicate values
         ''' 
-        self.xlFilt = self.xlData.columns[column]
+        self.xlFilt = column
         self.xlFiltVals = values
     
-
 
 class DocxFile:
     def __init__(self,pathFile,xlClass):
         self.nameFile = '' # Name file wich could correspond to the template copied files
         self.pathFile = pathFile # File path of the docx template
-        # NOTE: list order not corresponding to actual order on excel file.
-        # NOTE: this has repercusions on QR codes. Consider this when developing QR scanner and filling the excel
         self.paramTmp = [] # Parameters required to populate the template.
         self.filt = False # Bolean to activate filter
         self.xlFilt = '' # Column excel filter
@@ -107,12 +101,6 @@ class DocxFile:
         self.readDocx()
 
     def xlDataCaller(self):
-        # self.filt = self.xlClass.filt
-        # self.xlFilt = self.xlClass.xlFilt
-        # self.xlFilVals = self.xlClass.xlFilVals
-        # return self.xlClass.selectColumns(
-        #     self.paramTmp,self.filt,
-        #     column = self.xlFilt, value = self.xlFilVals)
         return self.xlClass.selectColumns(
             self.paramTmp)
 
@@ -132,6 +120,7 @@ class DocxFile:
             tagsSet = self.doc.get_undeclared_template_variables()
             self.numLbl = int(max(re.findall(numRe,str(tagsSet))))
             self.paramTmp = [i.replace('_',' ') for i in list(set(re.findall(strRe,str(tagsSet))))]
+            self.paramTmp = sorted(self.paramTmp, key = self.xlClass.returnColumns().index) # Params allways sorted as in the excel
 
     def createDict(self):
         '''Creates dictionary combining the tags found on the template
