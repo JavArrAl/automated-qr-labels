@@ -286,7 +286,6 @@ class FilterFrame(tk.Frame):
             self.listValues.insert(tk.END, value)
         
     def choosenValue(self,event):
-        # TODO: what to do with the selected value
         temp = list(self.listValues.curselection()) # Returns indexes
         self.filtVal = [self.values[val] for val in temp] # Selected values from filt column
         self.myParent.classFile.setFilter(self.params[self.filtCol],self.filtVal)
