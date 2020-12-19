@@ -26,6 +26,9 @@ class WrongDocxFile(Exception):
 class MissingXlFile(Exception):
     pass
 
+class EmptyTemplate(Exception):
+    pass
+
 
 class XlFile:
     def __init__(self,pathFile):
@@ -118,7 +121,10 @@ class DocxFile:
             numRe = re.compile(r'\d+')
             strRe = re.compile(r'[a-z_A-Z]+')
             tagsSet = self.doc.get_undeclared_template_variables()
-            self.numLbl = int(max(re.findall(numRe,str(tagsSet))))
+            try:
+                self.numLbl = int(max(re.findall(numRe,str(tagsSet))))
+            except:
+                raise EmptyTemplate
             self.paramTmp = [i.replace('_',' ') for i in list(set(re.findall(strRe,str(tagsSet))))]
             self.paramTmp = sorted(self.paramTmp, key = self.xlClass.returnColumns().index) # Params allways sorted as in the excel
 

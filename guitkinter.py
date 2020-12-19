@@ -77,7 +77,7 @@ class ExcelFrame(tk.Frame):
             ('All files','*.*'),))
         self.filtFrame = FilterFrame(self)
 
-        self.pack(fill = 'x')
+        self.pack(fill = 'x', padx = (10,10), pady = (10,10))
     
     
     def storeClassFile(self,classFile):
@@ -94,7 +94,7 @@ class DocxFrame(tk.Frame):
             self,1,'Select Docx file',
             (('word files','*.docx'),('All files','*.*'),),
             xlClass)
-        self.pack(fill='x')
+        self.pack(fill='x', padx = (10,10), pady = (10,10))
 
     def storeClassFile(self,classFile):
         self.classFile = classFile
@@ -150,18 +150,25 @@ class FileFrame(tk.Frame):
         self.classFile = None
         ## TODO: the entry is just representing the file, If text displayed by the user is corrected, it should be taken as filepath
         self.filePath = ''
+        self.topframe = tk.Frame(self)
+        self.midFrame = tk.Frame(self)
+        self.btmFrame = tk.Frame(self)
         self.tmpBtt = tk.Button(
-            self, text = 'Browse',
+            self.midFrame, text = 'Browse',
             command = lambda: self.fileBtw(classType,fileTypes,xlClass))
-        self.file = ttk.Entry(self,textvariable = self.filePath,width = 60)
-        self.frameLbl = ttk.Label(self,text=lblText)
-        self.errLbl = tk.Label(self,text ='',height = 1)
+        self.file = ttk.Entry(self.midFrame,textvariable = self.filePath,width = 60)
+        self.frameLbl = ttk.Label(self.topframe,text=lblText)
+        self.errLbl = tk.Label(self.btmFrame,text ='', justify = tk.LEFT)
+
+        self.topframe.pack(fill = 'x')
+        self.midFrame.pack(fill = 'x')
+        self.btmFrame.pack(fill = 'x', expand = True)
 
         self.pack(fill = 'x')
         self.frameLbl.pack(side = 'top', fill = 'both', anchor ='nw')
         self.file.pack(side = 'left', anchor = 'nw')
-        self.tmpBtt.pack(side = 'right', anchor = 'ne')
-        self.errLbl.pack(side = 'bottom', after = self.file, fill = 'both')
+        self.tmpBtt.pack(side = 'top', anchor = 'ne')
+        self.errLbl.pack(side = 'bottom', fill = 'both')
 
     
     def fileBtw(self,classType,fileTypes,xlClass):
@@ -194,10 +201,19 @@ class FileFrame(tk.Frame):
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
         except barcd.MissingXlFile:
+            self.filePath = ''
             self.errLbl['text'] = 'Please insert excel file first'
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
-            self.myParent.filtFrame.filterButton['state'] = tk.DISABLED   
+            self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED   
+        except barcd.EmptyTemplate:
+            self.filePath = ''
+            self.errLbl['text'] = 'Empty template. Please select a template with at least one field.\
+                \nFields should be formated like: {{ Name_Filed }}\
+                \nFields must be named as the column on the excel sheet.'
+            self.file.delete(0,last = tk.END)
+            self.file.insert(0,self.filePath)
+            self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
 
 
 class FolderFrame(tk.Frame):
@@ -302,7 +318,8 @@ class FilterFrame(tk.Frame):
             self.populateLists()
         else:
             self.listParms.delete(0,tk.END)
-            self.smpFiltBtt.toggle()
+            if self.stateSmpFilt.get():
+                self.smpFiltBtt.toggle()
             self.filterFrame.pack_forget()
             self.values = None
     
