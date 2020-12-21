@@ -7,6 +7,8 @@ from docx import Document
 from docxtpl import DocxTemplate
 import qrcode
 
+import variableFile
+
 '''
 Code that contains the main backend classes and function of the LabelCode
 This code needs at least two files to work properly.
@@ -88,6 +90,13 @@ class XlFile:
         self.xlFilt = column
         self.xlFiltVals = values
     
+    def returnValuesQR(self):
+        xlData = self.xlData
+        for column in xlData:
+            if xlData[column].dtype == '<M8[ns]':
+                xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
+        return xlData
+    
 
 class DocxFile:
     def __init__(self,pathFile,xlClass):
@@ -166,7 +175,8 @@ class DocxFile:
         # Automatic QR folder creation and destruction.
         self.tempFoldQR = tempfile.TemporaryDirectory()
         self.pathPic = self.tempFoldQR.name + '\\'
-        self.createBarcode()
+        #self.createBarcode()
+        self.createQR()
         self.createDict()
         try:
             os.mkdir(os.path.expanduser('~\\Desktop\\QR_Templates'))
@@ -187,6 +197,7 @@ class DocxFile:
 
     def createBarcode(self):
         '''
+        Deprecated. Better use createQR.
         Function that creates the QR codes
         '''
         for index,row in self.xlDataCaller().iterrows():
@@ -200,6 +211,43 @@ class DocxFile:
             self.listQR.append('{}QR{}'.format(self.pathPic,index))
             img.save('{}QR{}'.format(self.pathPic,index))   
 
+    def createQR(self):
+        '''Creates QR codes
+        It looks the excel columns names on AI from variableFile
+        If it exist, values will be used on QR code.
+        If not, column will not be used in QR code (e.g: consumables)
+        It matches AI with its corresponding value from the excel and
+        generates a single string which will be converted to QR.
+        If values are NaN (e.g. no docking station) they are discarded
+        '''
+        tempVals = self.xlClass.returnValuesQR() # All values xl with formated Timestamps
+        tempListAI = [None]*len(tempVals.columns)
+        count = 0
+        for col in tempVals.columns: # Create list AI corresponding Excel columns. Checks xl colums with AI dict of possible coincidences
+            for key in variableFile.AI.keys():
+                if col in variableFile.AI[key]:
+                    tempListAI[count] = key
+            count += 1
+        
+        tempTupList = []
+        for lt in tempVals.to_numpy(): # creates tuples(AI,Value)
+            tempTupList.append(list(zip(tempListAI,lt)))        
+        
+        countItem = 0
+        for item in tempTupList:
+            qr = qrcode.QRCode(
+                version = None, error_correction = qrcode.constants.ERROR_CORRECT_L,
+                box_size=10, border=4)
+            temp = dict(item)
+            temp.pop(None) # Discard non existent AI (excel column not in use for QR)
+            new_temp = {ky:va for ky,va in temp.items() if pd.notna(va)} # Create dictionary without Nan values (e.g: No DS)
+            new_temp = list(new_temp.items())
+            qr.add_data(''.join([''.join(map(str,i)) for i in new_temp])) # Joins all tuples in str, then all those str in a single str
+            img = qr.make_image()
+            self.listQR.append('{}QR{}'.format(self.pathPic,countItem))
+            img.save('{}QR{}'.format(self.pathPic,countItem))
+            countItem += 1
+            
     # Functions to update progressbar.
     def savePB(self,frame):
         self.progBar = frame
