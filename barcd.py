@@ -20,14 +20,20 @@ All relevant values are obtained from the Template file. Including:
 class WrongXlFile(Exception):
     pass
 
+
 class WrongDocxFile(Exception):
     pass
+
 
 class MissingXlFile(Exception):
     pass
 
 class EmptyTemplate(Exception):
     pass
+
+
+class EmbeddedFileError(Exception):
+    pass 
 
 
 class XlFile:
@@ -37,8 +43,7 @@ class XlFile:
         self.xlFilt = ''
         self.xlFiltVals = []
         self.readFile()
-
-    
+  
     def readFile(self):
         try:
             self.xlData = pd.read_excel(self.pathFile)
@@ -73,7 +78,6 @@ class XlFile:
     
     def returnValues(self,column):
         return list(set(self.xlData[column].dropna()))
-
 
     def setFilter(self,column,values):
         '''Sets filter parameters.
@@ -147,7 +151,10 @@ class DocxFile:
         self.doc.render(localContext)
         i = 1
         for pic in listQR:
-            self.doc.replace_pic('Dummy{}.png'.format(i),pic)
+            try:
+                self.doc.replace_pic('Dummy{}.png'.format(i),pic)
+            except:
+                raise EmbeddedFileError
             i += 1
         self.doc.save('{}{}{}.docx'.format(self.tempPath,nameTmp,numTemp))
         
@@ -183,6 +190,7 @@ class DocxFile:
         Function that creates the QR codes
         '''
         for index,row in self.xlDataCaller().iterrows():
+            # TODO: include AIs. See variableFile, list within dict for variable name ref
             tempStr = ';'.join(map(str,row))
             qr = qrcode.QRCode(
                 version = None, error_correction = qrcode.constants.ERROR_CORRECT_L,

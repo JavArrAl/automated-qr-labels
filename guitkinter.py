@@ -33,6 +33,7 @@ class MainFrame(tk.Frame):
         self.banner = BannerFrame(self)
         self.pack(fill = 'both', expand = True)
 
+
 class MainNotebook(ttk.Notebook):
     def __init__(self,myParent):
         ttk.Notebook.__init__(self,myParent)
@@ -60,11 +61,8 @@ class LabelFrame(tk.Frame):
         self.pack(fill = 'both')
     
     def giveDocxClass(self):
-        return self.docxFrame.classFile
+        return self.docxFrame.classFile      
 
-
-
-        
 
 class ExcelFrame(tk.Frame):
     def __init__(self,myParent):
@@ -79,10 +77,8 @@ class ExcelFrame(tk.Frame):
 
         self.pack(fill = 'x', padx = (10,10), pady = (10,10))
     
-    
     def storeClassFile(self,classFile):
         self.classFile = classFile
-
 
 
 class DocxFrame(tk.Frame):
@@ -142,7 +138,6 @@ class GenerateFrame(tk.Frame):
         self.prgBar.pack(side = 'left')
     
         
-
 class FileFrame(tk.Frame):
     def __init__(self,myParent,classType,lblText,fileTypes,xlClass = None):
         tk.Frame.__init__(self,myParent)
@@ -170,7 +165,6 @@ class FileFrame(tk.Frame):
         self.tmpBtt.pack(side = 'top', anchor = 'ne')
         self.errLbl.pack(side = 'bottom', fill = 'both')
 
-    
     def fileBtw(self,classType,fileTypes,xlClass):
         # excel file browser
         self.filePath = filedialog.askopenfilename(title = "Select file", filetypes = fileTypes)
@@ -214,12 +208,20 @@ class FileFrame(tk.Frame):
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
             self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
+        except barcd.EmbeddedFileError:
+            self.filePath = ''
+            self.errLbl['text'] = 'Something went wrong. Please check that all included media (e.g. pictures) are embedded in the file.\
+            \nPicures should be named as "DummyX" where X corresponds to the number on of the cell'
+            self.file.delete(0,last = tk.END)
+            self.file.insert(0,self.filePath)
+            self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
 
 
 class FolderFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         #self.pack(fill='x', expand=True)
+
 
 class FilterFrame(tk.Frame):
     def __init__(self,myParent):
@@ -273,7 +275,6 @@ class FilterFrame(tk.Frame):
             self.filtVar = True
             self.listValues.delete(0,tk.END)
 
-
     def populateLists(self,smply = False):
         '''Creates lists of values to filter. Firts the possible excel columns
         then the values of the column selected.
@@ -322,18 +323,19 @@ class FilterFrame(tk.Frame):
                 self.smpFiltBtt.toggle()
             self.filterFrame.pack_forget()
             self.values = None
-    
-    
+      
 
 class ScanFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         #self.pack(fill='both', expand=True)
 
+
 class CheckFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         #self.pack(fill='both', expand=True)
+
 
 class BannerFrame(tk.Frame):
     '''
@@ -345,8 +347,7 @@ class BannerFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
-        
-
+    
         ## TODO: Find sol for pictures in .exe python files
         imgPath = "C:\\Users\\Javier\\Documents\\Projects\\Docx Labels\\Icons\\mtsHealth.jpg"
         self.versionLbl = tk.Label(self,text = 'Version: 0.1')
@@ -356,11 +357,8 @@ class BannerFrame(tk.Frame):
         self.img = Image.open(imgPath)
         self.img = self.img.resize((50,50),Image.ANTIALIAS)
         self.mtsImage = ImageTk.PhotoImage(self.img)
-
         self.imgLbl = tk.Canvas(self, height = 50, width = 50)
-        
         self.imgLbl.create_image(25,25,image = self.mtsImage)
-
         self.imgLbl.pack(side= 'left')
         self.authorLbl.pack(anchor = 'se', side= 'right')
         self.versionLbl.pack(side = 'bottom',anchor='s')
