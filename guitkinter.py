@@ -115,13 +115,13 @@ class GenerateFrame(tk.Frame):
         self.pack(fill='x')
         self.topFrame.pack(side = 'top', fill = 'x')
         self.botFrame.pack(side = 'bottom', fill = 'x')
-        self.gnrLbl.pack(side = 'left', anchor = 'w')
-        self.gnrBtt.pack(side = 'right', anchor = 'w')
+        self.gnrLbl.pack(side = 'left', anchor = 'w', padx = (10,10), pady = (10,10))
+        self.gnrBtt.pack(side = 'right', anchor = 'w', padx = (10,10), pady = (10,10))
     
     def generateLbs(self):
         docxClass = self.getDocxClass()
         docxClass.labelGenLauncher()
-        self.locFolder.pack(side = 'left')
+        self.locFolder.pack(side = 'left', padx = (10,10), pady = (10,10))
     
     def getDocxClass(self):
         #Redundant
@@ -151,7 +151,7 @@ class FileFrame(tk.Frame):
         self.tmpBtt = tk.Button(
             self.midFrame, text = 'Browse',
             command = lambda: self.fileBtw(classType,fileTypes,xlClass))
-        self.file = ttk.Entry(self.midFrame,textvariable = self.filePath,width = 60)
+        self.file = ttk.Entry(self.midFrame,textvariable = self.filePath,width = 80)
         self.frameLbl = ttk.Label(self.topframe,text=lblText)
         self.errLbl = tk.Label(self.btmFrame,text ='', justify = tk.LEFT)
 
@@ -177,6 +177,10 @@ class FileFrame(tk.Frame):
                 self.classFile = barcd.XlFile(self.filePath)
                 self.myParent.storeClassFile(self.classFile)
                 self.myParent.filtFrame.filterButton['state'] = tk.ACTIVE # Activates filter
+                if self.myParent.granpa.docxFrame.classFile: # Restart xlClass on DocxFrame
+                    self.myParent.granpa.docxFrame.classFile = barcd.DocxFile(
+                        self.myParent.granpa.docxFrame.docxFile.filePath,
+                        self.myParent.classFile)
             elif classType == 1:
                 self.classFile = barcd.DocxFile(self.filePath,xlClass.classFile)
                 self.myParent.storeClassFile(self.classFile)
@@ -366,8 +370,8 @@ class BannerFrame(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry('500x500')
-    root.minsize(500,500)
+    root.geometry('600x500')
+    root.resizable(0,0)
     root.title('MTS Label Manager')
     mainFrame = MainFrame(root)
     root.mainloop()

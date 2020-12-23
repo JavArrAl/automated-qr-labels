@@ -52,34 +52,33 @@ class XlFile:
         except:
             raise WrongXlFile
     
-    def selectColumns(self,xlParms):
+    def selectColumns(self,xlParms =None):
         '''
         Receives the columns needed and returns those unique values.
         If filter is active, receives two argumens 'column' and 'value' from calling class
         Defined by user or 'Equimpent model' and 'BODYGUARD 323' by default
         Columns with Timestamp are filtered so they contain date only, formated as DD/MM/YY
         '''
-        # TODO: Check N/A groups. dropna not working on 'Equipment Model'
-        assert type(xlParms) == list, "xlParms should be list"
-        # if not filter:
         if not self.filt:
-            xlData = self.xlData[xlParms].dropna(subset = xlParms)
-        # elif filter:
+            xlData = self.xlData.copy()
         elif self.filt:
-            xlData = self.xlData[self.xlData[self.xlFilt].isin(self.xlFiltVals)]
-            xlData = xlData[xlParms].dropna(subset = xlParms)
+            xlData = self.xlData[self.xlData[self.xlFilt].isin(self.xlFiltVals)].copy()
 
-        for column in xlData:
+        for column in xlData.columns:
             if xlData[column].dtype == '<M8[ns]':
                 xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
         
-        return xlData
+        if xlParms:
+            return xlData[xlParms].dropna(subset = xlParms)
+        elif not xlParms:
+            return xlData
     
     def returnColumns(self):
         return list(self.xlData.columns)
     
     def returnValues(self,column):
-        return list(set(self.xlData[column].dropna()))
+        #return list(set(self.xlData[column].dropna()))
+        return self.xlData[column].dropna().unique()
 
     def setFilter(self,column,values):
         '''Sets filter parameters.
@@ -89,13 +88,6 @@ class XlFile:
         ''' 
         self.xlFilt = column
         self.xlFiltVals = values
-    
-    def returnValuesQR(self):
-        xlData = self.xlData
-        for column in xlData:
-            if xlData[column].dtype == '<M8[ns]':
-                xlData[column] = pd.DatetimeIndex(xlData[column], normalize = True).strftime('%d-%m-%Y')
-        return xlData
     
 
 class DocxFile:
@@ -201,7 +193,6 @@ class DocxFile:
         Function that creates the QR codes
         '''
         for index,row in self.xlDataCaller().iterrows():
-            # TODO: include AIs. See variableFile, list within dict for variable name ref
             tempStr = ';'.join(map(str,row))
             qr = qrcode.QRCode(
                 version = None, error_correction = qrcode.constants.ERROR_CORRECT_L,
@@ -218,9 +209,12 @@ class DocxFile:
         If not, column will not be used in QR code (e.g: consumables)
         It matches AI with its corresponding value from the excel and
         generates a single string which will be converted to QR.
-        If values are NaN (e.g. no docking station) they are discarded
+        If values are NaN (e.g. no docking station) they are not included in the QR
+        However, the function will create a QR code if any field within AI's has a value.
+        This bug is not fixed at the moment.
         '''
-        tempVals = self.xlClass.returnValuesQR() # All values xl with formated Timestamps
+
+        tempVals = self.xlClass.selectColumns() # All values xl with formated Timestamps
         tempListAI = [None]*len(tempVals.columns)
         count = 0
         for col in tempVals.columns: # Create list AI corresponding Excel columns. Checks xl colums with AI dict of possible coincidences
