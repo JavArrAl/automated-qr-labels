@@ -144,6 +144,11 @@ dmypy.json
 # Files
 Icon.ico
 Icon.png
+mtsHealth.jpg
+
+#Folders 
+/testingdevelopment
+
 
 ### VisualStudioCode ###
 .vscode/*
