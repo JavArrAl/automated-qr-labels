@@ -352,8 +352,7 @@ class BannerFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
     
-        ## TODO: Find sol for pictures in .exe python files
-        imgPath = "C:\\Users\\Javier\\Documents\\Projects\\Docx Labels\\Icons\\mtsHealth.jpg"
+        imgPath = os.path.join(os.path.dirname(__file__),'mtsHealth.jpg')
         self.versionLbl = tk.Label(self,text = 'Version: 0.1')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
@@ -373,5 +372,6 @@ if __name__ == "__main__":
     root.geometry('600x500')
     root.resizable(0,0)
     root.title('MTS Label Manager')
+    root.iconbitmap(os.path.join(os.path.dirname(__file__),'Icon.ico'))
     mainFrame = MainFrame(root)
     root.mainloop()
