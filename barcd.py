@@ -48,7 +48,7 @@ class XlFile:
   
     def readFile(self):
         try:
-            self.xlData = pd.read_excel(self.pathFile)
+            self.xlData = pd.read_excel(self.pathFile,engine='openpyxl')
         except:
             raise WrongXlFile
     
