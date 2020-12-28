@@ -1,6 +1,7 @@
 import tempfile
 import re
 import os.path
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from docx import Document
@@ -160,7 +161,7 @@ class DocxFile:
             except:
                 raise EmbeddedFileError
             i += 1
-        self.doc.save('{}{}{}.docx'.format(self.tempPath,nameTmp,numTemp))
+        self.doc.save('{}{}{}{}.docx'.format(self.tempPath,nameTmp,numTemp,datetime.now().strftime("_%d%b%y_%H;%M")))
         
     def labelGenLauncher(self):
         '''Calls labelGeneration function as many times as needed 

@@ -56,8 +56,12 @@ class LabelFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.instFrame = tk.Frame(self)
-        self.instLbl = tk.Label(self.instFrame, text = 'Instructions', justify = tk.LEFT, font='5')
-        self.filtInstLbl = tk.Label(self.instFrame, justify = tk.LEFT,
+        self.instLbl = tk.Label(self.instFrame,
+            text = 'Instructions',
+            justify = tk.LEFT,
+            font='5')
+        self.filtInstLbl = tk.Label(self.instFrame,
+            justify = tk.LEFT,
             text = '\t1.- Select an excel file with the devices information\n\
                 2.- Select a word document as a Template for the Labels.\n\
                     2.1- The template parameters should be formated like: {{ Name_Filed }}\n\
@@ -66,12 +70,17 @@ class LabelFrame(tk.Frame):
                 5.- Select ONE value from first table to filter specific excel column\n\
                 6.- Select as many values as needed from second table\n')
         
-        self.instFrame.pack(side = 'top', fill = 'both', padx = (10,10), pady = (10,10))
-        self.instLbl.pack(side = 'top', fill='both', anchor = 'w')
+        self.instFrame.pack(side = 'top',
+            fill = 'both',
+            padx = (10,10),
+            pady = (10,10))
+        self.instLbl.pack(side = 'top',
+            fill='both',
+            anchor = 'w')
         self.filtInstLbl.pack(fill='both', side = 'bottom')
 
         self.xlFrame = ExcelFrame(self)
-        self.docxFrame = DocxFrame(self,self.xlFrame)
+        self.docxFrame = DocxFrame(self, self.xlFrame)
         self.genFrame = GenerateFrame(self)
 
         self.pack(fill = 'both')
@@ -91,7 +100,9 @@ class ExcelFrame(tk.Frame):
             ('All files','*.*'),))
         #self.filtFrame = FilterFrame(self)
 
-        self.pack(fill = 'x', padx = (10,10), pady = (10,10))
+        self.pack(fill = 'x',
+            padx = (10,10),
+            pady = (10,10))
     
     def storeClassFile(self,classFile):
         self.classFile = classFile
@@ -106,7 +117,9 @@ class DocxFrame(tk.Frame):
             self,1,'Select Docx file',
             (('word files','*.docx'),('All files','*.*'),),
             xlClass)
-        self.pack(fill='x', padx = (10,10), pady = (10,10))
+        self.pack(fill='x',
+            padx = (10,10),
+            pady = (10,10))
         self.filtFrame = FilterFrame(self)
 
     def storeClassFile(self,classFile):
@@ -124,21 +137,33 @@ class GenerateFrame(tk.Frame):
             command = lambda: self.generateLbs(),
             state = tk.DISABLED)
         self.gnrLbl = tk.Label(
-            self.topFrame, text = 'Click on the button to generate the labels')
+            self.topFrame,
+            text = 'Click on the button to generate the labels')
         self.locFolder = tk.Label(
-            self.botFrame, text = 'Labels stored in QR_Template folder in Desktop',
+            self.botFrame,
+            text = 'Labels stored in QR_Template folder in Desktop',
             state = tk.DISABLED)
 
         self.pack(fill='x')
-        self.topFrame.pack(side = 'top', fill = 'x')
-        self.botFrame.pack(side = 'bottom', fill = 'x')
-        self.gnrLbl.pack(side = 'left', anchor = 'w', padx = (10,10), pady = (10,10))
-        self.gnrBtt.pack(side = 'right', anchor = 'w', padx = (10,10), pady = (10,10))
+        self.topFrame.pack(side = 'top',
+            fill = 'x')
+        self.botFrame.pack(side = 'bottom',
+            fill = 'x')
+        self.gnrLbl.pack(side = 'left',
+            anchor = 'w',
+            padx = (10,10),
+            pady = (10,10))
+        self.gnrBtt.pack(side = 'right',
+            anchor = 'w',
+            padx = (10,10),
+            pady = (10,10))
     
     def generateLbs(self):
         docxClass = self.getDocxClass()
         docxClass.labelGenLauncher()
-        self.locFolder.pack(side = 'left', padx = (10,10), pady = (10,10))
+        self.locFolder.pack(side = 'left',
+            padx = (10,10),
+            pady = (10,10))
         self.gnrBtt['bg'] = 'pale green'
     
     def getDocxClass(self):
@@ -149,9 +174,12 @@ class GenerateFrame(tk.Frame):
         # TODO: fix progressBar. "function object has no attribute 'xlDataCaller"
         self.totTmp = len(self.myParent.giveDocxClass.xlDataCaller())/len(self.myParent.giveDocxClass.paramTmp)
         self.prgBar = ttk.Progressbar(
-            self.botFrame,orient = tk.HORIZONTAL,
-            length = 400, mode = 'determinate',
-            value = 0, maximum = self.totTmp)
+            self.botFrame,
+            orient = tk.HORIZONTAL,
+            length = 400,
+            mode = 'determinate',
+            value = 0,
+            maximum = self.totTmp)
         self.myParent.giveDocxClass.savePB(self)
         self.prgBar.pack(side = 'left')
     
@@ -167,27 +195,37 @@ class FileFrame(tk.Frame):
         self.midFrame = tk.Frame(self)
         self.btmFrame = tk.Frame(self)
         self.tmpBtt = tk.Button(
-            self.midFrame, text = 'Browse',
-            state = tk.DISABLED, command = lambda: self.fileBtw(classType,fileTypes,xlClass))
+            self.midFrame,
+            text = 'Browse',
+            state = tk.DISABLED,
+            command = lambda: self.fileBtw(classType,fileTypes,xlClass))
         if classType == 0:
             self.tmpBtt['state'] = tk.ACTIVE
-        self.file = ttk.Entry(self.midFrame,textvariable = self.filePath,width = 80)
-        self.frameLbl = ttk.Label(self.topframe,text=lblText)
-        self.errLbl = tk.Label(self.btmFrame,text ='', justify = tk.LEFT)
+        self.file = ttk.Entry(self.midFrame,
+            textvariable = self.filePath,
+            width = 80)
+        self.frameLbl = ttk.Label(self.topframe,
+            text=lblText)
+        self.errLbl = tk.Label(self.btmFrame,
+            text ='',
+            justify = tk.LEFT)
 
         self.topframe.pack(fill = 'x')
         self.midFrame.pack(fill = 'x')
         self.btmFrame.pack(fill = 'x', expand = True)
 
         self.pack(fill = 'x')
-        self.frameLbl.pack(side = 'top', fill = 'both', anchor ='nw')
+        self.frameLbl.pack(side = 'top',
+            fill = 'both',
+            anchor ='nw')
         self.file.pack(side = 'left', anchor = 'nw')
         self.tmpBtt.pack(side = 'top', anchor = 'ne')
         self.errLbl.pack(side = 'bottom', fill = 'both')
 
     def fileBtw(self,classType,fileTypes,xlClass):
         # excel file browser
-        self.filePath = filedialog.askopenfilename(title = "Select file", filetypes = fileTypes)
+        self.filePath = filedialog.askopenfilename(title = "Select file",
+            filetypes = fileTypes)
         self.file.delete(0,last = tk.END)
         self.file.insert(0,self.filePath)
 
@@ -265,34 +303,42 @@ class FilterFrame(tk.Frame):
 
         self.filterButton = tk.Checkbutton(
             self.bttFrame, text = 'Filter\t\t\t',
-            variable = self.filtVar, onvalue = True,
-            offvalue = False, command = lambda: self.showFilter(self.filtVar),
+            variable = self.filtVar,
+            onvalue = True,
+            offvalue = False,
+            command = lambda: self.showFilter(self.filtVar),
             state = tk.DISABLED)
         self.smpFiltBtt = tk.Checkbutton(
             self.bttFrame, text = 'Template \n parameters',
-            variable = self.stateSmpFilt, onvalue = True,
-            offvalue = False, command = lambda: self.simplyFilter(),
+            variable = self.stateSmpFilt,
+            onvalue = True,
+            offvalue = False,
+            command = lambda: self.simplyFilter(),
             state = tk.DISABLED)
  
         self.filterFrame = tk.Frame(self.interFrame)
         self.barListParms = tk.Scrollbar(self.filterFrame)
         self.barListValues = tk.Scrollbar(self.filterFrame)
         self.listParms = tk.Listbox(
-            self.filterFrame,selectmode = 'single',
+            self.filterFrame,
+            selectmode = 'single',
             yscrollcommand = self.barListParms.set,
             exportselection = 0)
         self.listValues = tk.Listbox(
-            self.filterFrame, selectmode = 'multiple',
+            self.filterFrame,
+            selectmode = 'multiple',
             yscrollcommand = self.barListValues.set,
             exportselection = 0)
         self.barListValues.config(command = self.listValues.yview)
         self.barListParms.config(command = self.listParms.yview)
 
-        self.pack(fill = 'x',side = 'left')
+        self.pack(fill = 'x', side = 'left')
         self.interFrame.pack(side='bottom', fill = 'both')
         self.bttFrame.pack(side = 'left')
         self.filterButton.pack(anchor = 'w', fill = 'x')
-        self.smpFiltBtt.pack(side = 'bottom',anchor = 'sw', after = self.filterButton)
+        self.smpFiltBtt.pack(side = 'bottom',
+            anchor = 'sw',
+            after = self.filterButton)
 
         # Binding
         self.listParms.bind('<<ListboxSelect>>', self.choosenColumn)
@@ -321,7 +367,7 @@ class FilterFrame(tk.Frame):
         for param in self.params:
             self.listParms.insert(tk.END, param)              
 
-        self.barListValues.pack(side = 'right',fill = 'x')
+        self.barListValues.pack(side = 'right', fill = 'x')
         self.listValues.pack(side = 'right')
         self.barListParms.pack(side = 'right', fill = 'x')
         self.listParms.pack(side = 'right')  
@@ -365,16 +411,26 @@ class ScanFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='both', expand=True)
-        self.tempLbl = tk.Label(self, text = 'Site under construction', font = 10, highlightcolor='slate gray')
-        self.tempLbl.pack(fill='both',padx = (10,10), pady = (10,10))
+        self.tempLbl = tk.Label(self,
+            text = 'Site under construction',
+            font = 10,
+            highlightcolor='slate gray')
+        self.tempLbl.pack(fill='both',
+            padx = (10,10),
+            pady = (10,10))
 
 
 class CheckFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='both', expand=True)
-        self.tempLbl = tk.Label(self, text = 'Site under construction', font = 10, highlightcolor='slate gray')
-        self.tempLbl.pack(fill='both',padx = (10,10), pady = (10,10))
+        self.tempLbl = tk.Label(self,
+            text = 'Site under construction',
+            font = 10,
+            highlightcolor='slate gray')
+        self.tempLbl.pack(fill='both',
+            padx = (10,10),
+            pady = (10,10))
 
 
 class BannerFrame(tk.Frame):
@@ -396,11 +452,15 @@ class BannerFrame(tk.Frame):
         self.img = Image.open(imgPath)
         self.img = self.img.resize((50,50),Image.ANTIALIAS)
         self.mtsImage = ImageTk.PhotoImage(self.img)
-        self.imgLbl = tk.Canvas(self, height = 50, width = 50)
-        self.imgLbl.create_image(25,25,image = self.mtsImage)
+        self.imgLbl = tk.Canvas(self,
+            height = 50,
+            width = 50)
+        self.imgLbl.create_image(25,
+            25,
+            image = self.mtsImage)
         self.imgLbl.pack(side= 'left')
         self.authorLbl.pack(anchor = 'se', side= 'right')
-        self.versionLbl.pack(side = 'bottom',anchor='s')
+        self.versionLbl.pack(side = 'bottom', anchor='s')
 
 
 if __name__ == "__main__":
