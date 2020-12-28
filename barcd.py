@@ -48,7 +48,10 @@ class XlFile:
   
     def readFile(self):
         try:
-            self.xlData = pd.read_excel(self.pathFile,engine='openpyxl')
+            if self.pathFile.split('.')[-1] == 'xls': # Case not handled by openpyxl
+                self.xlData = pd.read_excel(self.pathFile)
+            else:
+                self.xlData = pd.read_excel(self.pathFile,engine='openpyxl')
         except:
             raise WrongXlFile
     

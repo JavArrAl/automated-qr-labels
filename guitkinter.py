@@ -55,11 +55,27 @@ class LabelFrame(tk.Frame):
     '''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
+        self.instFrame = tk.Frame(self)
+        self.instLbl = tk.Label(self.instFrame, text = 'Instructions', justify = tk.LEFT, font='5')
+        self.filtInstLbl = tk.Label(self.instFrame, justify = tk.LEFT,
+            text = '\t1.- Select an excel file with the devices information\n\
+                2.- Select a word document as a Template for the Labels.\n\
+                    2.1- The template parameters should be formated like: {{ Name_Filed }}\n\
+                3.- Activate/Deactivate the filter clicking on checkbox "Filter".\n\
+                4.- Check Template parameters to filter only by parameters present on the templates\n\
+                5.- Select ONE value from first table to filter specific excel column\n\
+                6.- Select as many values as needed from second table\n')
+        
+        self.instFrame.pack(side = 'top', fill = 'both', padx = (10,10), pady = (10,10))
+        self.instLbl.pack(side = 'top', fill='both', anchor = 'w')
+        self.filtInstLbl.pack(fill='both', side = 'bottom')
+
         self.xlFrame = ExcelFrame(self)
         self.docxFrame = DocxFrame(self,self.xlFrame)
         self.genFrame = GenerateFrame(self)
+
         self.pack(fill = 'both')
-    
+
     def giveDocxClass(self):
         return self.docxFrame.classFile      
 
@@ -73,7 +89,7 @@ class ExcelFrame(tk.Frame):
             self,0,'Select excel file',
             (('Excel file','*.xlsx'),('Excel file', '*.xls'),
             ('All files','*.*'),))
-        self.filtFrame = FilterFrame(self)
+        #self.filtFrame = FilterFrame(self)
 
         self.pack(fill = 'x', padx = (10,10), pady = (10,10))
     
@@ -91,6 +107,7 @@ class DocxFrame(tk.Frame):
             (('word files','*.docx'),('All files','*.*'),),
             xlClass)
         self.pack(fill='x', padx = (10,10), pady = (10,10))
+        self.filtFrame = FilterFrame(self)
 
     def storeClassFile(self,classFile):
         self.classFile = classFile
@@ -105,7 +122,7 @@ class GenerateFrame(tk.Frame):
         self.gnrBtt = tk.Button(
             self.topFrame, text = 'Generate labels',
             command = lambda: self.generateLbs(),
-            bg = 'orange')
+            state = tk.DISABLED)
         self.gnrLbl = tk.Label(
             self.topFrame, text = 'Click on the button to generate the labels')
         self.locFolder = tk.Label(
@@ -122,6 +139,7 @@ class GenerateFrame(tk.Frame):
         docxClass = self.getDocxClass()
         docxClass.labelGenLauncher()
         self.locFolder.pack(side = 'left', padx = (10,10), pady = (10,10))
+        self.gnrBtt['bg'] = 'pale green'
     
     def getDocxClass(self):
         #Redundant
@@ -150,7 +168,9 @@ class FileFrame(tk.Frame):
         self.btmFrame = tk.Frame(self)
         self.tmpBtt = tk.Button(
             self.midFrame, text = 'Browse',
-            command = lambda: self.fileBtw(classType,fileTypes,xlClass))
+            state = tk.DISABLED, command = lambda: self.fileBtw(classType,fileTypes,xlClass))
+        if classType == 0:
+            self.tmpBtt['state'] = tk.ACTIVE
         self.file = ttk.Entry(self.midFrame,textvariable = self.filePath,width = 80)
         self.frameLbl = ttk.Label(self.topframe,text=lblText)
         self.errLbl = tk.Label(self.btmFrame,text ='', justify = tk.LEFT)
@@ -176,23 +196,27 @@ class FileFrame(tk.Frame):
             if classType == 0:
                 self.classFile = barcd.XlFile(self.filePath)
                 self.myParent.storeClassFile(self.classFile)
-                self.myParent.filtFrame.filterButton['state'] = tk.ACTIVE # Activates filter
+                self.myParent.granpa.docxFrame.filtFrame.filterButton['state'] = tk.ACTIVE # Activates filter
+                self.myParent.granpa.docxFrame.docxFile.tmpBtt['state'] = tk.ACTIVE
                 if self.myParent.granpa.docxFrame.classFile: # Restart xlClass on DocxFrame
                     self.myParent.granpa.docxFrame.classFile = barcd.DocxFile(
                         self.myParent.granpa.docxFrame.docxFile.filePath,
                         self.myParent.classFile)
+                self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
             elif classType == 1:
                 self.classFile = barcd.DocxFile(self.filePath,xlClass.classFile)
                 self.myParent.storeClassFile(self.classFile)
                 #self.myParent.granpa.genFrame.createPB()
-                self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.ACTIVE
+                self.myParent.filtFrame.smpFiltBtt['state'] = tk.ACTIVE
+                self.myParent.granpa.genFrame.gnrBtt['state'] = tk.ACTIVE
+                self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
 
         except barcd.WrongXlFile:
             self.filePath = ''
-            self.errLbl['text'] = 'Wrong file format. Please use file format: xls, xlsx, xlsm, xlsb, odf, ods or odt'
+            self.errLbl['text'] = 'Wrong file format. Please use file format: xlsx. Or: xls, xlsm, xlsb, odf, ods or odt'
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
-            self.myParent.filtFrame.filterButton['state'] = tk.DISABLED
+            self.myParent.granpa.docxFrame.filtFrame.filterButton['state'] = tk.DISABLED
         except barcd.WrongDocxFile:
             self.filePath = ''
             self.errLbl['text'] = 'Wrong file format. Please use file format: docx'
@@ -203,7 +227,7 @@ class FileFrame(tk.Frame):
             self.errLbl['text'] = 'Please insert excel file first'
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
-            self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED   
+            self.myParent.granpa.docxFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED   
         except barcd.EmptyTemplate:
             self.filePath = ''
             self.errLbl['text'] = 'Empty template. Please select a template with at least one field.\
@@ -211,14 +235,14 @@ class FileFrame(tk.Frame):
                 \nFields must be named as the column on the excel sheet.'
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
-            self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
+            self.myParent.granpa.docxFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
         except barcd.EmbeddedFileError:
             self.filePath = ''
             self.errLbl['text'] = 'Something went wrong. Please check that all included media (e.g. pictures) are embedded in the file.\
             \nPicures should be named as "DummyX" where X corresponds to the number on of the cell'
             self.file.delete(0,last = tk.END)
             self.file.insert(0,self.filePath)
-            self.myParent.granpa.xlFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
+            self.myParent.granpa.docxFrame.filtFrame.smpFiltBtt['state'] = tk.DISABLED
 
 
 class FolderFrame(tk.Frame):
@@ -228,12 +252,17 @@ class FolderFrame(tk.Frame):
 
 
 class FilterFrame(tk.Frame):
+    '''Frame with filter options
+    Implemented in DocxFrame
+    '''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.myParent = myParent
         self.filtVar = True
         self.stateSmpFilt = tk.BooleanVar()
-        self.bttFrame = tk.Frame(self)
+        self.interFrame = tk.Frame(self)
+        self.bttFrame = tk.Frame(self.interFrame)
+
         self.filterButton = tk.Checkbutton(
             self.bttFrame, text = 'Filter\t\t\t',
             variable = self.filtVar, onvalue = True,
@@ -244,9 +273,8 @@ class FilterFrame(tk.Frame):
             variable = self.stateSmpFilt, onvalue = True,
             offvalue = False, command = lambda: self.simplyFilter(),
             state = tk.DISABLED)
-
-
-        self.filterFrame = tk.Frame(self)
+ 
+        self.filterFrame = tk.Frame(self.interFrame)
         self.barListParms = tk.Scrollbar(self.filterFrame)
         self.barListValues = tk.Scrollbar(self.filterFrame)
         self.listParms = tk.Listbox(
@@ -259,7 +287,9 @@ class FilterFrame(tk.Frame):
             exportselection = 0)
         self.barListValues.config(command = self.listValues.yview)
         self.barListParms.config(command = self.listParms.yview)
+
         self.pack(fill = 'x',side = 'left')
+        self.interFrame.pack(side='bottom', fill = 'both')
         self.bttFrame.pack(side = 'left')
         self.filterButton.pack(anchor = 'w', fill = 'x')
         self.smpFiltBtt.pack(side = 'bottom',anchor = 'sw', after = self.filterButton)
@@ -270,11 +300,11 @@ class FilterFrame(tk.Frame):
 
     def showFilter(self, filtVar):
         if filtVar:
-            self.myParent.classFile.filt = True # Activates the filter on barcd.py
+            self.myParent.granpa.xlFrame.classFile.filt = True # Activates the filter on barcd.py
             self.filterOptions(filtVar)
             self.filtVar = False
         else:
-            self.myParent.classFile.filt = False
+            self.myParent.granpa.xlFrame.classFile.filt = False
             self.filterOptions(filtVar)
             self.filtVar = True
             self.listValues.delete(0,tk.END)
@@ -285,15 +315,15 @@ class FilterFrame(tk.Frame):
         '''
         self.listParms.delete(0,tk.END)
         if not smply:
-            self.params = self.myParent.classFile.returnColumns()
+            self.params = self.myParent.granpa.xlFrame.classFile.returnColumns()
         if smply:
-            self.params = self.myParent.granpa.docxFrame.classFile.paramTmp # Template column parameters
+            self.params = self.myParent.classFile.paramTmp # Template column parameters
         for param in self.params:
             self.listParms.insert(tk.END, param)              
 
-        self.barListValues.pack(side = 'right',fill = 'both')
+        self.barListValues.pack(side = 'right',fill = 'x')
         self.listValues.pack(side = 'right')
-        self.barListParms.pack(side = 'right', fill = 'both')
+        self.barListParms.pack(side = 'right', fill = 'x')
         self.listParms.pack(side = 'right')  
 
     def choosenColumn(self,event):
@@ -302,14 +332,16 @@ class FilterFrame(tk.Frame):
         '''
         self.listValues.delete(0,tk.END)
         self.filtCol = self.listParms.curselection()[0] # Index column read from template
-        self.values = self.myParent.classFile.returnValues(self.params[self.filtCol])
+        self.values = self.myParent.granpa.xlFrame.classFile.returnValues(self.params[self.filtCol])
+        self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
         for value in self.values:
             self.listValues.insert(tk.END, value)
         
     def choosenValue(self,event):
         temp = list(self.listValues.curselection()) # Returns indexes
         self.filtVal = [self.values[val] for val in temp] # Selected values from filt column
-        self.myParent.classFile.setFilter(self.params[self.filtCol],self.filtVal)
+        self.myParent.granpa.xlFrame.classFile.setFilter(self.params[self.filtCol],self.filtVal)
+        self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
     
     def simplyFilter(self):
         if self.stateSmpFilt.get():
@@ -332,13 +364,17 @@ class FilterFrame(tk.Frame):
 class ScanFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
-        #self.pack(fill='both', expand=True)
+        self.pack(fill='both', expand=True)
+        self.tempLbl = tk.Label(self, text = 'Site under construction', font = 10, highlightcolor='slate gray')
+        self.tempLbl.pack(fill='both',padx = (10,10), pady = (10,10))
 
 
 class CheckFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
-        #self.pack(fill='both', expand=True)
+        self.pack(fill='both', expand=True)
+        self.tempLbl = tk.Label(self, text = 'Site under construction', font = 10, highlightcolor='slate gray')
+        self.tempLbl.pack(fill='both',padx = (10,10), pady = (10,10))
 
 
 class BannerFrame(tk.Frame):
@@ -369,7 +405,7 @@ class BannerFrame(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry('600x500')
+    root.geometry('600x685')
     root.resizable(0,0)
     root.title('MTS Label Manager')
     root.iconbitmap(os.path.join(os.path.dirname(__file__),'Icon.ico'))
