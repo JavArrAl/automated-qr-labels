@@ -47,6 +47,7 @@ class MainNotebook(ttk.Notebook):
         self.add(self.scanFrame, text='Scanner')
         self.add(self.checkFrame, text='Checker')
 
+# Classes related with Label Frame
 
 class LabelFrame(tk.Frame):
     '''
@@ -201,12 +202,15 @@ class FileFrame(tk.Frame):
             command = lambda: self.fileBtw(classType,fileTypes,xlClass))
         if classType == 0:
             self.tmpBtt['state'] = tk.ACTIVE
-        self.file = ttk.Entry(self.midFrame,
+        self.file = ttk.Entry(
+            self.midFrame,
             textvariable = self.filePath,
             width = 80)
-        self.frameLbl = ttk.Label(self.topframe,
+        self.frameLbl = ttk.Label(
+            self.topframe,
             text=lblText)
-        self.errLbl = tk.Label(self.btmFrame,
+        self.errLbl = tk.Label(
+            self.btmFrame,
             text ='',
             justify = tk.LEFT)
 
@@ -215,7 +219,8 @@ class FileFrame(tk.Frame):
         self.btmFrame.pack(fill = 'x', expand = True)
 
         self.pack(fill = 'x')
-        self.frameLbl.pack(side = 'top',
+        self.frameLbl.pack(
+            side = 'top',
             fill = 'both',
             anchor ='nw')
         self.file.pack(side = 'left', anchor = 'nw')
@@ -405,32 +410,6 @@ class FilterFrame(tk.Frame):
                 self.smpFiltBtt.toggle()
             self.filterFrame.pack_forget()
             self.values = None
-      
-
-class ScanFrame(tk.Frame):
-    def __init__(self,myParent):
-        tk.Frame.__init__(self,myParent)
-        self.pack(fill='both', expand=True)
-        self.tempLbl = tk.Label(self,
-            text = 'Site under construction',
-            font = 10,
-            highlightcolor='slate gray')
-        self.tempLbl.pack(fill='both',
-            padx = (10,10),
-            pady = (10,10))
-
-
-class CheckFrame(tk.Frame):
-    def __init__(self,myParent):
-        tk.Frame.__init__(self,myParent)
-        self.pack(fill='both', expand=True)
-        self.tempLbl = tk.Label(self,
-            text = 'Site under construction',
-            font = 10,
-            highlightcolor='slate gray')
-        self.tempLbl.pack(fill='both',
-            padx = (10,10),
-            pady = (10,10))
 
 
 class BannerFrame(tk.Frame):
@@ -461,6 +440,127 @@ class BannerFrame(tk.Frame):
         self.imgLbl.pack(side= 'left')
         self.authorLbl.pack(anchor = 'se', side= 'right')
         self.versionLbl.pack(side = 'bottom', anchor='s')
+      
+#Classes related with ScanFrame
+
+class ScanFrame(tk.Frame):
+    def __init__(self,myParent):
+        tk.Frame.__init__(self,myParent)
+        self.pack(fill = 'both', expand = True)
+        # self.tempLbl = tk.Label(self,
+        #     text = 'Site under construction',
+        #     font = 10,
+        #     highlightcolor = 'slate gray')
+        # self.tempLbl.pack(fill = 'both',
+        #     padx = (10,10),
+        #     pady = (10,10))
+
+        self.instFrame = IntrusctLblFrame(self)
+        self.reqPumpFrame = ReqPumpFrame(self)
+        self.analyticFrame = AnalyticsFrame(self)
+
+        self.instFrame.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
+        self.reqPumpFrame.pack(fill = tk.BOTH, expand = True)
+        self.analyticFrame.pack(side = tk.BOTTOM, fill = tk.BOTH, expand = True)
+
+
+class IntrusctLblFrame(tk.Frame):
+    '''Frame with instructions and Ready label
+    Ready lable changes when the excel file is detected
+    '''
+    def __init__(self,myParent):
+        tk.Frame.__init__(self,myParent)
+        self.readyVar = tk.StringVar()
+        self.readyVar.set('Open handover form')
+
+        self.instFrame = tk.Frame(self)
+        self.readyFrame = tk.Frame(self)
+        self.instLbl = tk.Label(self.instFrame, text = 'Intructuions')
+        self.instTxt = tk.Label(self.instFrame, text = 'To be completed')
+        self.readLbl = tk.Label(self.readyFrame, text = self.readyVar)
+
+        self.instFrame.pack(side = tk.LEFT)
+        self.readyFrame.pack(side = tk.RIGHT)
+        self.instLbl.pack(side = tk.TOP)
+        self.instTxt.pack(side = tk.BOTTOM)
+        self.readLbl.pack(fill = tk.BOTH)
+    
+    def checkExistXl(self):
+        '''Function that constantly checks if excel is open
+        If it is, values can be processed
+        If not, 
+        '''
+        pass
+
+
+class ReqPumpFrame(tk.Frame):
+    '''Frame with entry asking for the excel file
+    This file should contain the pumps requested by client
+    '''
+    def __init__(self, myParent):
+        tk.Frame.__init__(self,myParent)
+        self.filePathEntry = tk.StringVar()
+        self.filePathEntry.set('')
+
+        self.lblFrame = tk.Frame(self)
+        self.askFileFrame = tk.Frame(self)
+        self.lblXlFile = tk.Label(
+            self.lblFrame,
+            text = 'Requested pumps excel')
+        self.fileEntry = tk.Entry(
+            self.askFileFrame,
+            text = self.filePathEntry,
+            width = 80)
+        self.browBtt = tk.Button(
+            self.askFileFrame,
+            text = 'Browse',
+            command = lambda: self.fileBtw)
+
+        self.lblFrame.pack(side = tk.TOP, anchor = tk.W)
+        self.askFileFrame.pack(anchor = tk.W)
+        self.lblXlFile.pack(fill = 'x')
+        self.fileEntry.pack(side = tk.LEFT)
+        self.browBtt.pack(side = tk.RIGHT)
+
+    def fileBtw(self):
+        # excel file browser
+        self.filePathEntry.set(
+            filedialog.askopenfilename(
+                title = "Select file",
+                filetypes = (('Excel file', '*.xlsx'), ('Excel file', '*.xls'), ('All files', '*.*'),)))
+        self.fileEntry.delete(0,last = tk.END)
+        self.fileEntry.insert(0,self.filePathEntry)
+
+
+class AnalyticsFrame(tk.Frame):
+    '''Frame containing the table with pumps
+    requested and ready
+    '''
+    def __init__(self,myParent):
+        tk.Frame.__init__(self,myParent)
+        self.analLblFrame = tk.Frame(self)
+        self.analTblFrame = tk.Frame(self)
+        self.analLbl = tk.Label(self.analLblFrame, text = 'Analytics')
+        # TODO: Implement table with analytics of current pumps
+        self.analTbl = tk.Label(self.analTblFrame, text = 'Here goes the table')
+
+        self.analLblFrame.pack(side = tk.TOP)
+        self.analTblFrame.pack(side = tk.BOTTOM)
+        self.analLbl.pack(fill = 'x')
+        self.analTbl.pack(fill ='x')
+
+
+class CheckFrame(tk.Frame):
+    def __init__(self,myParent):
+        tk.Frame.__init__(self,myParent)
+        self.pack(fill='both', expand=True)
+        self.tempLbl = tk.Label(self,
+            text = 'Site under construction',
+            font = 10,
+            highlightcolor='slate gray')
+        self.tempLbl.pack(fill='both',
+            padx = (10,10),
+            pady = (10,10))
 
 
 if __name__ == "__main__":
