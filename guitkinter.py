@@ -1,4 +1,3 @@
-import variableFile
 import os
 import threading
 import pythoncom
@@ -11,6 +10,8 @@ from PIL import Image, ImageTk
 import pandas as pd
 
 import barcd
+import readqr
+import variableFile
 
 '''Labels application interface. Main tree:
 tk
@@ -447,79 +448,6 @@ class BannerFrame(tk.Frame):
       
 #Classes related with ScanFrame
 
-class WorkbookEvents:
-    def OnSheetSelectionChange(self, *args):
-        '''Possible use to determine where the user is
-        Might be useful to check whether correcting of adding new lines
-        '''
-        pass
-        
-    def OnSheetChange(self, *args):
-        global changedValue
-        global addressChanged
-        changedValue.set(str(args[1].Value))
-        addressChanged = args[1].Address
-
-class XlReadWritre:
-    '''Class that handles reading, cleaning, processing
-    of the open excel. It checks if the open workbook is 
-    the one designed as Handover form. Name should have been
-    previously agreed.
-    '''
-    # TODO: if values are read from sheet. Message showing the name of sheet1 by default.
-    def __init__(self,parentFrame,xlapp):
-        self.xl = xlapp
-        self.parent = parentFrame
-        self.xlWorkbook = None
-        self.checkWb()
-
-    def checkWb(self):
-        '''Check if workbook is the handover form
-        '''
-        # TODO: include msg if the name does not match
-        # NOTE: This is considering that only the xlsx files is going to be opened
-        try:
-            self.xl.Workbooks('readingx.xlsx')
-            if not self.xlWorkbook:
-                self.xlWorkbook = self.xl.Workbooks('readingx.xlsx')
-                self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-                self.readExcel()
-            else:
-                None
-            self.parent.readyVar.set('Ready')
-            self.parent.readLbl.config(foreground = 'green')
-        except:
-            self.parent.readyVar.set('Open handover form')
-            self.parent.readLbl.config(foreground = 'red')
-    
-    def readExcel(self):
-        '''Reads current excel and creates file with all pumps included
-        File used to check duplicates and do analytics
-        '''
-        # TODO: Think what happens if all this is deleted after moving to a diferent notebook frame
-        try:
-            self.values = self.xlWorkbook.Worksheets('Sheet1').UsedRange
-        except:
-            print('No sheet called Sheet1')
-        
-        heads = self.values[1] # Request form heads are in row 2
-        vals = self.values[2:] # Values start at row 3
-        # Creates a df from the tuple of tuples with all the values in the excel
-        tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
-        tempDict = dict(zip(heads,list(tempMap))) # Zips each column name with the list of values
-        self.dfValues = pd.DataFrame(tempDict)  
-
-    def processChanges(self):
-        '''Function that process changes on excel
-        ''' 
-        global changedValue
-        global addressChanged
-        # TODO: Think how to link last row in DataFrame with the Address of last modified value in excel
-        pass
-
-
-
-
 class ScanFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
@@ -570,13 +498,13 @@ class IntrusctLblFrame(tk.Frame):
         If it is, values can be processed, label set to Ready
         If not, display msg when input detected, label set to Red
         '''
-        global changedValue
+        # global changedValue
         try:
             win32.GetActiveObject('Excel.Application')
             if not self.xl:
                 self.xl = win32.GetActiveObject('Excel.Application')
-                self.processClass = XlReadWritre(self, self.xl)
-                changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
+                self.processClass = readqr.XlReadWrite(self, self.xl)
+                variableFile.changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
             else:
                 self.processClass.checkWb()
         except:
@@ -662,9 +590,10 @@ if __name__ == "__main__":
     root.resizable(0,0)
     root.title('MTS Label Manager')
     root.iconbitmap(os.path.join(os.path.dirname(__file__),'Icon.ico'))
-    # Global variable. Input from user (scanner/keyboard)
-    changedValue = tk.StringVar()
-    changedValue.set('')
-    addressChanged = None
+    # Global variable. Input from user (scanner/keyboard) 
+    # Now they come from variableFile.py
+    # changedValue = tk.StringVar()
+    # changedValue.set('')
+    # addressChanged = None
     mainFrame = MainFrame(root)
     root.mainloop()
