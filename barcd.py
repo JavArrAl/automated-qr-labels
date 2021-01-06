@@ -237,7 +237,8 @@ class DocxFile:
                 version = None, error_correction = qrcode.constants.ERROR_CORRECT_L,
                 box_size=10, border=4)
             temp = dict(item)
-            temp.pop(None) # Discard non existent AI (excel column not in use for QR)
+            if any(key == None for key in temp.keys()): # Checks if any excel column not in AI dict
+                temp.pop(None) # Discard non existent AI (excel column not in use for QR)
             new_temp = {ky:va for ky,va in temp.items() if pd.notna(va)} # Create dictionary without Nan values (e.g: No DS)
             new_temp = list(new_temp.items())
             qr.add_data(''.join([''.join(map(str,i)) for i in new_temp])) # Joins all tuples in str, then all those str in a single str
@@ -256,6 +257,8 @@ class DocxFile:
 
 if __name__ == "__main__":
     
+    import tkinter as tk
+    root = tk.Tk()
 
     xlFile = "C:/Users/Javier/Documents/Projects/Docx Labels/Originals/" + "tmpBD1B.xls"
     lblDoc = "C:/Users/Javier/Documents/Projects/Docx Labels/Originals/" + "LabelsJavi2.docx"

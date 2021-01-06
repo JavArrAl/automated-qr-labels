@@ -18,7 +18,7 @@ AI = {
 
 # global changedValue
 # global addressChanged
-
-changedValue = tk.StringVar()
-changedValue.set('')
-addressChanged = None
+def init():
+    changedValue = tk.StringVar()
+    changedValue.set('')
+    addressChanged = None

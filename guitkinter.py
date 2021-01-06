@@ -589,11 +589,13 @@ if __name__ == "__main__":
     root.geometry('600x685')
     root.resizable(0,0)
     root.title('MTS Label Manager')
+    # TODO: put this on a folder. Media folder or similar with all pictures
     root.iconbitmap(os.path.join(os.path.dirname(__file__),'Icon.ico'))
     # Global variable. Input from user (scanner/keyboard) 
     # Now they come from variableFile.py
     # changedValue = tk.StringVar()
     # changedValue.set('')
     # addressChanged = None
+    variableFile.init()
     mainFrame = MainFrame(root)
     root.mainloop()
