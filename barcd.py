@@ -149,7 +149,7 @@ class DocxFile:
             if inx > self.numLbl: inx = 1
         self.context = list(zip(self.dictKeys,self.xlDataCaller().to_numpy().flatten()))
     
-    def labelGeneration(self,listQR,numTemp,localContext,nameTmp = 'Template'):
+    def labelGeneration(self,listQR,numTemp,numFiles,localContext,nameTmp = 'Templates'):
         '''Function that fills the template docxs
         '''
         self.readDocx()
@@ -161,7 +161,13 @@ class DocxFile:
             except:
                 raise EmbeddedFileError
             i += 1
-        self.doc.save('{}{}{}{}.docx'.format(self.tempPath,nameTmp,numTemp,datetime.now().strftime("_%d%b%y_%H;%M")))
+        numFiles *= self.numLbl
+        self.doc.save('{}{} {}-{} {}.docx'.format( #Templates Ini-Fin Date
+            self.tempPath,
+            nameTmp,
+            numTemp+1+numFiles,
+            numTemp+self.numLbl+numFiles,
+            datetime.now().strftime("%d-%m-%Y")))
         
     def labelGenLauncher(self):
         '''Calls labelGeneration function as many times as needed 
@@ -180,10 +186,17 @@ class DocxFile:
         except FileExistsError:
             self.tempPath = os.path.expanduser('~\\Desktop\\QR_Templates\\')
         ini = 0
-        for rows in range(0,len(self.xlDataCaller()),self.numLbl):
-            fin = ini +(self.numLbl*len(self.paramTmp))
-            self.labelGeneration(self.listQR[rows:rows+self.numLbl],
-                rows,dict(self.context[ini:fin]))
+        countFiles = 0
+        for nameFile in os.listdir(self.tempPath): # Count number of files in QR_Template folder
+            if os.path.isfile(os.path.join(self.tempPath,nameFile)):
+                countFiles += 1
+        for rows in range(0, len(self.xlDataCaller()), self.numLbl):
+            fin = ini + (self.numLbl*len(self.paramTmp))
+            self.labelGeneration(
+                self.listQR[rows:rows+self.numLbl],
+                rows,
+                countFiles,
+                dict(self.context[ini:fin]))
             ini = fin
             #self.upgradePB(self.numLbl)
 

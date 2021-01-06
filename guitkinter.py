@@ -174,21 +174,7 @@ class GenerateFrame(tk.Frame):
     
     def getDocxClass(self):
         #Redundant
-        return self.myParent.giveDocxClass()
-    
-    def createPB(self):
-        # TODO: fix progressBar. "function object has no attribute 'xlDataCaller"
-        self.totTmp = len(self.myParent.giveDocxClass.xlDataCaller())/len(self.myParent.giveDocxClass.paramTmp)
-        self.prgBar = ttk.Progressbar(
-            self.botFrame,
-            orient = tk.HORIZONTAL,
-            length = 400,
-            mode = 'determinate',
-            value = 0,
-            maximum = self.totTmp)
-        self.myParent.giveDocxClass.savePB(self)
-        self.prgBar.pack(side = 'left')
-    
+        return self.myParent.giveDocxClass()    
         
 class FileFrame(tk.Frame):
     def __init__(self,myParent,classType,lblText,fileTypes,xlClass = None):
@@ -254,7 +240,6 @@ class FileFrame(tk.Frame):
             elif classType == 1:
                 self.classFile = barcd.DocxFile(self.filePath,xlClass.classFile)
                 self.myParent.storeClassFile(self.classFile)
-                #self.myParent.granpa.genFrame.createPB()
                 self.myParent.filtFrame.smpFiltBtt['state'] = tk.ACTIVE
                 self.myParent.granpa.genFrame.gnrBtt['state'] = tk.ACTIVE
                 self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
@@ -428,7 +413,7 @@ class BannerFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
     
-        imgPath = os.path.join(os.path.dirname(__file__),'mtsHealth.jpg')
+        imgPath = os.path.join(os.path.dirname(__file__),'Media','mtsHealth.jpg')
         self.versionLbl = tk.Label(self,text = 'Version: 0.1')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
@@ -589,13 +574,7 @@ if __name__ == "__main__":
     root.geometry('600x685')
     root.resizable(0,0)
     root.title('MTS Label Manager')
-    # TODO: put this on a folder. Media folder or similar with all pictures
-    root.iconbitmap(os.path.join(os.path.dirname(__file__),'Icon.ico'))
-    # Global variable. Input from user (scanner/keyboard) 
-    # Now they come from variableFile.py
-    # changedValue = tk.StringVar()
-    # changedValue.set('')
-    # addressChanged = None
+    root.iconbitmap(os.path.join(os.path.dirname(__file__),'Media','Icon.ico'))
     variableFile.init()
     mainFrame = MainFrame(root)
     root.mainloop()
