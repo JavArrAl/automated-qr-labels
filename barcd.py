@@ -198,7 +198,6 @@ class DocxFile:
                 countFiles,
                 dict(self.context[ini:fin]))
             ini = fin
-            #self.upgradePB(self.numLbl)
 
         # Necessary for a proper functioning
         self.tempFoldQR.cleanup()
@@ -259,13 +258,7 @@ class DocxFile:
             self.listQR.append('{}QR{}'.format(self.pathPic,countItem))
             img.save('{}QR{}'.format(self.pathPic,countItem))
             countItem += 1
-            
-    # Functions to update progressbar.
-    def savePB(self,frame):
-        self.progBar = frame
-    
-    def upgradePB(self,step):
-        self.progBar.prgBar['value'] += step
+
 
 
 if __name__ == "__main__":
