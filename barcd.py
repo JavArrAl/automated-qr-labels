@@ -149,7 +149,7 @@ class DocxFile:
             if inx > self.numLbl: inx = 1
         self.context = list(zip(self.dictKeys,self.xlDataCaller().to_numpy().flatten()))
     
-    def labelGeneration(self,listQR,numTemp,numFiles,localContext,nameTmp = 'Templates'):
+    def labelGeneration(self,listQR,numTemp,numFiles,localContext,nameTmp = "Lloyd's template"):
         '''Function that fills the template docxs
         '''
         self.readDocx()
@@ -161,10 +161,12 @@ class DocxFile:
             except:
                 raise EmbeddedFileError
             i += 1
+        # FIXME: if number of labels per template is different, names wont match
         numFiles *= self.numLbl
-        self.doc.save('{}{} {}-{} {}.docx'.format( #Templates Ini-Fin Date
+        self.doc.save('{}{} {} labels {}-{} {}.docx'.format( #Templates Ini-Fin Date
             self.tempPath,
             nameTmp,
+            self.numLbl,
             numTemp+1+numFiles,
             numTemp+self.numLbl+numFiles,
             datetime.now().strftime("%d-%m-%Y")))

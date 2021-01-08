@@ -7,18 +7,20 @@ AI = {
     '(10)': ['Creation Date', 'Creation_Date'],
     '(11)': ['Call_Date', 'Call Date'],
     '(12)': ['Close_Date', 'Close Date'],
-    '(13)': ['Work_End_Date', 'Work End Date','Service_Date', 'Service Date'],
-    '(21)': ['Serial_Number', ' Serial Number', 'S/N', 'S No', 'S_No', 'Serial No', 'Serial_No'],
+    '(13)': ['Work_End_Date', 'Work End Date','Service_Date', 'Service Date','SERVICE DATE','SERVICE_DATE'],
+    '(21)': ['Serial_Number', ' Serial Number', 'S/N', 'S No', 'S_No', 'Serial No', 'Serial_No','S/No'],
     '(22)': ['DS Serial No', 'DS_Serial_No', ' Docking Station', 'Docking_Station', 'Docking Station SN', 'Docking_Station_SN', 'DS_SN', 'DS SN', 'DS SNo', 'DS_SNo', 'Docking STN', 'DOCKING STN'],
-    '(30)': ['Equipment_Model', 'Equipment Model', 'Model', 'Device Type', 'Device_Type'],
-    '(90)': ['Settings', 'Configuration'],
-    '(91)': ['Consumables']
+    '(30)': ['Equipment_Model', 'Equipment Model', 'Model', 'Device Type', 'Device_Type','MODEL'],
+    '(90)': ['Settings', 'Configuration','SETTINGS'],
+    '(91)': ['Consumables','CONSUMABLES']
 }
 
 
-# global changedValue
-# global addressChanged
+
 def init():
+    global changedValue
     changedValue = tk.StringVar()
     changedValue.set('')
-    addressChanged = None
+
+global addressChanged
+addressChanged = None

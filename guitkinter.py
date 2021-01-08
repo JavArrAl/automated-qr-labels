@@ -69,12 +69,12 @@ class LabelFrame(tk.Frame):
         self.filtInstLbl = tk.Label(self.instFrame,
             justify = tk.LEFT,
             text = '\t1.- Select an excel file with the devices information\n\
-                2.- Select a word document as a Template for the Labels.\n\
-                    2.1- The template parameters should be formated like: {{ Name_Filed }}\n\
-                3.- Activate/Deactivate the filter clicking on checkbox "Filter".\n\
-                4.- Check Template parameters to filter only by parameters present on the templates\n\
-                5.- Select ONE value from first table to filter specific excel column\n\
-                6.- Select as many values as needed from second table\n')
+                2.- Select a word document as a template for the labels.\n\
+                    2.1- The template parameters should be included between double curly brackets: {{ Name_Filed }}\n\
+                3.- Activate/Deactivate the filter by clicking on the checkbox "Filter".\n\
+                4.- Check the "Template parameters" box to filter only by the parameters in the templates\n\
+                5.- Select ONE value from the first table to filter by an specific excel column\n\
+                6.- Select as many values as needed from the second table\n')
         
         self.instFrame.pack(side = 'top',
             fill = 'both',
@@ -120,7 +120,7 @@ class DocxFrame(tk.Frame):
         self.granpa = myParent
         self.classFile = None # Reference barcd.py class created
         self.docxFile = FileFrame(
-            self,1,'Select Docx file',
+            self,1,'Select template file',
             (('word files','*.docx'),('All files','*.*'),),
             xlClass)
         self.pack(fill='x',
@@ -413,7 +413,7 @@ class BannerFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
     
-        imgPath = os.path.join(os.path.dirname(__file__),'Media','mtsHealth.jpg')
+        imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.jpg')
         self.versionLbl = tk.Label(self,text = 'Version: 0.1')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
@@ -574,7 +574,7 @@ if __name__ == "__main__":
     root.geometry('600x685')
     root.resizable(0,0)
     root.title('MTS Label Manager')
-    root.iconbitmap(os.path.join(os.path.dirname(__file__),'Media','Icon.ico'))
+    root.iconbitmap(os.path.join(os.path.dirname(__file__),'media','Icon.ico'))
     variableFile.init()
     mainFrame = MainFrame(root)
     root.mainloop()
