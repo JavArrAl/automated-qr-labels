@@ -110,7 +110,13 @@ class XlReadWrite:
             self.newWb()
 
     def checkWb(self):
-        '''Check if workbook is the handover form
+        '''Check if workbooks are open, checks names
+        matches with template and finds coming dates.
+        If not workbooks opened searches for files in folders.
+        If file with coming date exists, it is used, if not
+        a new file is created with TEMPORAL REQUEST FORM.
+        This file will be used whenever it exists and should be
+        always renamed as soon as possible.
         '''
         # TODO: copy template and save it as new file where changes are stored method: "SaveCopyAs"
         # NOTE: This is considering that only the xlsx files is going to be opened
