@@ -484,20 +484,36 @@ class IntrusctLblFrame(tk.Frame):
         If not, display msg when input detected, label set to Red
         '''
         # global changedValue
+        # try:
+        #     win32.GetActiveObject('Excel.Application')
+        #     if not self.xl:
+        #         self.xl = win32.GetActiveObject('Excel.Application')
+        #         self.processClass = readqr.XlReadWrite(self, self.xl)
+        #         variableFile.changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
+        #     else:
+        #         self.processClass.checkWb()
+        # except:
+        #     self.readyVar.set('Open excel')
+        #     self.readLbl.config(foreground = 'gray')
+
+        # self.after(1000, self.checkExistXl)
+        
         try:
             win32.GetActiveObject('Excel.Application')
             if not self.xl:
                 self.xl = win32.GetActiveObject('Excel.Application')
-                self.processClass = readqr.XlReadWrite(self, self.xl)
-                variableFile.changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
+                self.processClass = readqr.XlReadWrite(self,self.xl)
+                variableFile.changedValue.trace('w',self.processClass.processChanges)
+                self.processClass.checkWb()
             else:
                 self.processClass.checkWb()
         except:
-            self.readyVar.set('Open excel')
-            self.readLbl.config(foreground = 'gray')
+            self.xl = win32.Dispatch('Excel.Application')
+            self.processClass = readqr.XlReadWrite(self,self.xl)
+            variableFile.changedValue.trace('w',self.processClass.processChanges)
+            self.processClass.openWb()
+                
 
-        self.after(1000, self.checkExistXl)
-        
 
 class ReqPumpFrame(tk.Frame):
     '''Frame with entry asking for the excel file
