@@ -6,6 +6,7 @@ import win32com.client as win32
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter import messagebox
 from PIL import Image, ImageTk
 import pandas as pd
 
@@ -453,65 +454,231 @@ class IntrusctLblFrame(tk.Frame):
     '''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
+        # Variables
         self.readyVar = tk.StringVar()
+        self.dayVar = tk.StringVar()
+        self.dayVar.set('DD')
+        self.monthVar = tk.StringVar()
+        self.monthVar.set('MM')
+        self.yearVar = tk.StringVar()
+        self.yearVar.set('YYYY')
+        self.fileSelected = tk.StringVar()
         self.readyVar.set('Open excel')
-        self.xl = None
 
+        #self.xl = None
+        self.processClass = readqr.XlReadWrite(self)
+
+        # Top level
         self.instFrame = tk.Frame(self)
-        self.readyFrame = tk.Frame(self)
+        # self.readyFrame = tk.Frame(self)
+        self.menuFrame = tk.Frame(self,width = 40)
+
+        # Mid level
+        # In instFrame
         self.instLbl = tk.Label(
             self.instFrame,
             text = 'Intructuions')
         self.instTxt = tk.Label(
             self.instFrame, 
             text = 'To be completed')
-        self.readLbl = tk.Label(
-            self.readyFrame,
+        # In menuFrame
+        self.openFrame = tk.Frame(self.menuFrame) 
+        self.newFrame = tk.Frame(self.menuFrame)
+        self.selectFrame = tk.Frame(self.menuFrame)
+        self.dateVarsFrame = tk.Frame(self.newFrame)
+
+        # Low level
+        # openFrame
+        self.openButton = tk.Button(
+            self.openFrame,
+            text = 'Open',
+            command = lambda : self.openNewWb()
+        )
+        self.openName = tk.Label(
+            self.openFrame,
             textvariable = self.readyVar,
             font = 25,
-            foreground = 'gray')
+            foreground = 'gray',
+            width = 200
+        )
+        # newFrame
+        self.newButton = tk.Button(
+            self.newFrame,
+            text = "New",
+            command = lambda : self.createNewWb()
+        )
+        self.dayEntry = tk.Entry(
+            self.dateVarsFrame,
+            textvariable = self.dayVar,
+            width = 4
+        )
+        self.monthEntry = tk.Entry(
+            self.dateVarsFrame,
+            textvariable = self.monthVar,
+            width = 4
+        )
+        self.yearEntry = tk.Entry(
+            self.dateVarsFrame,
+            textvariable = self.yearVar,
+            width = 6
+        )
+        hyphonVar  = tk.Label(self.dateVarsFrame,text = '-')
+        hyphonVarDup  = tk.Label(self.dateVarsFrame,text = '-')
 
+        # selectFrame
+        self.selectButton = tk.Button(
+            self.selectFrame,
+            text = 'Select',
+            command = lambda : self.selectWb()
+        )
+
+        self.selectList = ttk.Combobox(
+            self.selectFrame,
+            textvariable = self.fileSelected,
+            values = self.processClass.fillXlOpenList(),
+            width = 25
+        )
+        self.selectList.bind('<FocusIn>',self.updateCombobox) # Updates the list when focused
+
+        self.readLbl = tk.Label(
+            self.openFrame,
+            textvariable = self.readyVar,
+            font = 25,
+            foreground = 'gray',
+            width = 30)
+
+        # Top level
         self.instFrame.pack(side = tk.LEFT)
-        self.readyFrame.pack(side = tk.RIGHT)
+        self.menuFrame.pack(side = tk.RIGHT, fill = tk.X)
+
+        # Mid level
+        # instFrame
         self.instLbl.pack(side = tk.TOP)
         self.instTxt.pack(side = tk.BOTTOM)
-        self.readLbl.pack(fill = tk.BOTH)
-        self.checkExistXl()
-    
-    def checkExistXl(self):
-        '''Function that constantly checks if excel is open
-        If it is, values can be processed, label set to Ready
-        If not, display msg when input detected, label set to Red
-        '''
-        # global changedValue
-        # try:
-        #     win32.GetActiveObject('Excel.Application')
-        #     if not self.xl:
-        #         self.xl = win32.GetActiveObject('Excel.Application')
-        #         self.processClass = readqr.XlReadWrite(self, self.xl)
-        #         variableFile.changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
-        #     else:
-        #         self.processClass.checkWb()
-        # except:
-        #     self.readyVar.set('Open excel')
-        #     self.readLbl.config(foreground = 'gray')
-
-        # self.after(1000, self.checkExistXl)
+        # menuFrame
+        self.openFrame.pack(side = tk.TOP, fill = tk.BOTH)
+        self.newFrame.pack(side = tk.LEFT,fill = tk.X)
+        self.dateVarsFrame.pack(side = tk.RIGHT,fill = tk.X)
+        self.selectFrame.pack(side = tk.BOTTOM)
         
-        try:
-            win32.GetActiveObject('Excel.Application')
-            if not self.xl:
-                self.xl = win32.GetActiveObject('Excel.Application')
-                self.processClass = readqr.XlReadWrite(self,self.xl)
-                variableFile.changedValue.trace('w',self.processClass.processChanges)
-                self.processClass.checkWb()
-            else:
-                self.processClass.checkWb()
-        except:
-            self.xl = win32.Dispatch('Excel.Application')
-            self.processClass = readqr.XlReadWrite(self,self.xl)
-            variableFile.changedValue.trace('w',self.processClass.processChanges)
-            self.processClass.openWb()
+        # Low level
+        # open
+        self.openButton.pack(side = tk.LEFT, padx = 10)
+        self.readLbl.pack()
+        # New
+        self.newButton.pack(side = tk.LEFT, padx = 10)
+        self.dayEntry.pack(side = tk.LEFT)
+        hyphonVar.pack(side = tk.LEFT)
+        self.monthEntry.pack(side = tk.LEFT)
+        hyphonVarDup.pack(side = tk.LEFT)
+        self.yearEntry.pack(side = tk.LEFT)
+        # Select
+        self.selectButton.pack(side = tk.LEFT, padx = 10)
+        self.selectList.pack()
+
+
+        # self.readLbl.pack(fill = tk.BOTH)
+        # self.launchXl()
+    
+    def openNewWb(self):
+        filePath = filedialog.askopenfilename(
+            title = "Select excel file",
+            filetypes = (('Excel file','*.xlsx'),
+                ('Excel file', '*.xls'),
+                ('All files','*.*'),)
+        )
+        if filePath:
+            self.processClass.openWb(filePath)
+    
+    def createNewWb(self):
+        dateStr = '{}-{}-{}'.format(
+            self.dayVar.get(),
+            self.monthVar.get(),
+            self.yearVar.get()
+        )
+        self.processClass.newWb(date=dateStr)
+    
+    def wrognDate(self):
+        messagebox.showerror('Wrong date',' Wrong date.\n Please insert a correct date')
+    
+    def fileExists(self):
+        messagebox.showwarning('File already exists', 'A file with that date already exists.\nPlease select another date or delete/rename the existing file')
+    
+    def selectWb(self):
+        if self.fileSelected:
+            self.processClass.selectWbActive(self.fileSelected.get())
+        
+    def updateCombobox(self,event):
+        self.selectList['values'] = self.processClass.fillXlOpenList()
+
+
+    
+    # def checkExistXl(self):
+    #     '''Function that constantly checks if excel is open
+    #     If it is, values can be processed, label set to Ready
+    #     If not, display msg when input detected, label set to Red
+    #     If excel is open, set "excelOpen" var to TRUE
+    #     '''
+    #     # global changedValue
+    #     self.stopXl = self.after(1000, self.checkExistXl)
+    #     try:
+    #         # win32.GetActiveObject('Excel.Application')
+    #         self.xl = win32.GetActiveObject('Excel.Application')
+    #         self.processClass = readqr.XlReadWrite(self, self.xl)
+    #         variableFile.changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
+    #         variableFile.changedValue.trace('w',self.cehckVarXl)
+    #         self.after_cancel(self.stopXl)
+    #         # self.stopWb = self.after(500,self.checkExistsWb)
+    #         variableFile.excelOpen.set(tk.TRUE)
+    #         self.checkExistsWb()
+    #     except:
+    #         self.readyVar.set('Open excel')
+    #         self.readLbl.config(foreground = 'red')
+    #         self.stopXl = self.after(1000, self.checkExistXl)
+    
+    # def checkExistsWb(self):
+    #     self.readyVar.set('Open handover form')
+    #     self.readLbl.config(foreground = 'orange')
+    #     self.stopWb = self.after(1000,self.checkExistsWb)
+    #     try:
+    #         self.after_cancel(self.stopWb)
+    #         self.processClass.checkNewWb()
+    #     except ValueError:
+    #         self.stopWb = self.after(1000,self.checkExistsWb)
+
+    # def cehckVarXl(self,n,m,x):
+    #     '''Called when the excel application is closed
+    #     Launches the function with after method to check if Xl is open
+    #     '''
+    #     if variableFile.excelOpen.get():
+    #         pass
+    #     else:
+    #         self.checkExistXl()    
+        
+
+
+    # def launchXl(self):
+    #     '''First function to be launched when Scan tab is opened
+    #     Reads or Opens excel file depending on the user interaction
+    #     '''        
+    #     try:
+    #         win32.GetActiveObject('Excel.Application')
+    #         if not self.xl:
+    #             self.xl = win32.GetActiveObject('Excel.Application')
+    #             self.processClass = readqr.XlReadWrite(self,self.xl)
+    #             variableFile.changedValue.trace('w',self.processClass.processChanges)
+    #             variableFile.excelOpen.set(tk.TRUE)
+    #             variableFile.excelOpen.trace('w',self.cehckVarXl)
+    #             self.processClass.checkWb()
+    #         else:
+    #             self.processClass.checkWb()
+    #     except:
+    #         self.xl = win32.Dispatch('Excel.Application')
+    #         self.processClass = readqr.XlReadWrite(self,self.xl)
+    #         variableFile.changedValue.trace('w',self.processClass.processChanges)
+    #         variableFile.excelOpen.set(tk.TRUE)
+    #         variableFile.excelOpen.trace('w',self.cehckVarXl)
+    #         self.processClass.openWb()
                 
 
 

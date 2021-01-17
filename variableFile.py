@@ -19,7 +19,10 @@ AI = {
 
 def init():
     global changedValue
+    global excelOpen
     changedValue = tk.StringVar()
+    excelOpen = tk.BooleanVar()
+    excelOpen.set(tk.FALSE)
     changedValue.set('')
 
 global addressChanged

@@ -26,8 +26,9 @@ class WorkbookEvents:
         '''Event before the workbook closes and before asking
         to save changes.
         Possible use to trigger format before closing
-        # TODO: if file is TEMPORAL ask the user to save the file with another name
         '''
+        #if not win32.GetActiveObject('Excel.Application'): # Checks if excel is still running. 
+        variableFile.excelOpen.set(tk.FALSE)
         pass
         
 
@@ -36,16 +37,46 @@ class XlReadWrite:
     of the open excel. It checks if the open workbook is 
     the one designed as Handover form. Name should have been
     previously agreed.
+    WorkFlow:
+        - Workbook open?
+            - Yes: Do name matches pattern?
+                - Yes: Use that file
+                - No: Go to open file
+            - No: Go to folder, any name with temporal name?
+                - Yes: Open that file
+                - No: Check dates of files. Any one with an incoming date?
+                    - Yes: Open that file
+                    - No: Create a new file with temporal name
+
+    After the workbook is opened, if closed:
+        - Call checkExistXl. New app has been open?
+            - Yes: checkExistWorkbook. Workbook exists?
+                - Yes: Use that file
+                - No: Keep waiting until new file is opened
     '''
-    # TODO: if values are read from sheet. Message showing the name of sheet1 by default.
-    def __init__(self,parentFrame,xlapp):
-        self.xl = xlapp
+    # FIXME: Working with any excel after opening or selecting the first excel will delete all new values introduced on the excel.
+    # TODO: bring selected workbook to the top
+    def __init__(self,parentFrame):
+        self.xl = None
         self.parent = parentFrame
         self.xlWorkbook = None
         self.dirPath = os.path.expanduser('~\\Desktop\\REQUEST FORMS')
         #self.dfValues = pd.DataFrame()
         # self.checkWb()
         # self.readExcel()
+    
+    def openXl(self):
+        '''Attempt to open excel
+        If not  open, launches excel.
+        '''
+        try:
+            self.xl = win32.GetActiveObject('Excel.Application')
+        except:
+            try:
+                self.xl = win32.Dispatch('Excel.Application')
+            except:
+                self.parent.readyVar.set('Excel not available. Please make sure excel is installed')# Gets name of file
+                self.parent.readLbl.config(foreground = 'red')
 
     def checkNameDate(self,wbNames):
         '''Checks name file matches desired name
@@ -68,92 +99,183 @@ class XlReadWrite:
                         lastName = wbName
                 except: # Possibly the file has a date not valid, skip that file
                     continue
-        return lastName, lastDate    
+        return lastName, lastDate
     
-    def newWb(self):
-        '''Creates new TEMPORAL REQUEST FORM in REQUEST FORM folder
+    def checkDate(self,date):
+        '''Function that checks the date is valid
+        '''
+
+        dateRegx = re.compile(r'(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})')
+        corrDate = re.search(dateRegx, date)
+        if corrDate:
+            return date
+        else:
+            raise ValueError 
+
+    def openWb(self,filePath):
+        '''Opens an excel file selected by the user
+        That file will be the one to work with
+        '''
+
+        self.openXl()     
+        try:
+            self.xlWorkbook = self.xl.Workbooks.Open(filePath)
+            self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+            self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))# Gets name of file
+            self.parent.readLbl.config(foreground = 'green')
+            self.readExcel()
+        except:
+            self.parent.readyVar.set('ERROR opening excel. Contact support')       
+        self.xl.Visible = True
+        variableFile.changedValue.trace('w',self.processChanges)
+    
+    def fillXlOpenList(self):
+        '''Creates a list with all opened excel files
+        This list corresponds to the values of combobox on GUI
+        '''
+
+        try:
+            self.xl = win32.GetActiveObject('Excel.Application')
+            if self.xl.Workbooks.Count == 0:
+                return []
+            else:
+                xlList = []
+                for xl in range(1,self.xl.Workbooks.Count + 1):
+                    xlList.append(self.xl.Workbooks(xl).Name)
+                return xlList
+        except:
+            return []
+        
+    def selectWbActive(self,name):
+        '''Sets the selected workbook as working workbook
+        '''
+        self.openXl()
+        try:
+            self.xlWorkbook = self.xl.Workbooks(name)
+            self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+            self.parent.readyVar.set(name)
+            self.parent.readLbl.config(foreground = 'green')
+            self.xl.Visible = True
+            variableFile.changedValue.trace('w',self.processChanges)
+            self.readExcel()
+        except:
+            self.parent.readyVar.set('Error with excel file. Please panic')
+            self.parent.readLbl.config(foreground = 'red')
+
+    
+    def newWb(self,date=None):
+        '''Creates new request file in REQUEST FORM folder
         If folder does not exists, it is created.
         The new file is a copy of the template included with the program.
+        The file is named as REQUEST FORM + DATE.
+        The date is introduced by the user through GUI
         '''
-        if not os.path.isdir(self.dirPath):
-            os.mkdir(os.path.expanduser(self.dirPath))
-        else:
+        try:
+            self.xl = win32.GetActiveObject('Excel.Application')
+        except:
+            self.xl = win32.Dispatch('Excel.Application')
+
+        try:
+            corrDate = self.checkDate(date)
+            name = 'REQUEST FORM {}.xlsx'.format(corrDate)
+
+            if not os.path.isdir(self.dirPath):
+                os.mkdir(os.path.expanduser(self.dirPath))
             source = os.path.join(os.path.dirname(__file__),'templates','REQUEST FORM TEMPLATE.xlsx')
-            destiny = os.path.join(self.dirPath,'TEMPORAL REQUEST FORM.xlsx')
-            shutil.copy(source, destiny)
-            self.xlWorkbook = self.xl.Workbooks.Open(destiny)
-            self.xl.Visible = True
-            self.parent.readyVar.set('TEMPORAL REQUEST FORM.xlsx')
-    
-    def openWb(self):
-        '''Checks if REQUESTED FORMS folder exists in Desktop
-        Reads files and tries to find one with an incoming date
-        If not, new file is created with temporal name until delivery date selected
-        '''
-        if os.path.isdir(self.dirPath):
-            filesFolder = os.listdir(self.dirPath)
-            lastName,lastDate = self.checkNameDate(filesFolder)
-            if lastDate:
-                if lastDate > datetime.date.today():
-                    self.xlWorkbook = self.xl.Workbooks.Open(os.path.join(self.dirPath,lastName))
-                    self.xl.Visible = True
-                    self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-                    self.parent.readyVar.set(lastName)
-                else:
-                    self.newWb()
-            if not lastDate:
-                self.xlWorkbook = self.xl.Workbooks.Open(os.path.join(self.dirPath,'TEMPORAL REQUEST FORM.xlsx'))
+            destiny = os.path.join(self.dirPath,name) 
+            try:
+                shutil.copy(source, destiny)
+                self.xlWorkbook = self.xl.Workbooks.Open(destiny)
+                self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
                 self.xl.Visible = True
-                self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-                self.parent.readyVar.set('TEMPORAL REQUEST FORM.xlsx')
-        else:
-            self.newWb()
+                self.parent.readyVar.set(name)
+                self.parent.readLbl.config(foreground = 'green')
+                variableFile.changedValue.trace('w',self.processChanges)
+                self.readExcel()
+            except PermissionError:
+                self.parent.fileExists()
+        except ValueError:
+            self.parent.wrognDate()
 
-    def checkWb(self):
-        '''Check if workbooks are open, checks names
-        matches with template and finds coming dates.
-        If not workbooks opened searches for files in folders.
-        If file with coming date exists, it is used, if not
-        a new file is created with TEMPORAL REQUEST FORM.
-        This file will be used whenever it exists and should be
-        always renamed as soon as possible.
-        '''
-        # TODO: copy template and save it as new file where changes are stored method: "SaveCopyAs"
-        # NOTE: This is considering that only the xlsx files is going to be opened
-        # FIXME: This is not working properly
-        # try:
-        #     self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
-        #     if not self.xlWorkbook:
-        #         #self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
-        #         self.xlWorkbook = self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
-        #         self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-        #         # self.readExcel()
-        #     else:
-        #         None
-        #     self.parent.readyVar.set('Ready')
-        #     self.parent.readLbl.config(foreground = 'green')
-        # except:
-        #     self.parent.readyVar.set('Open handover form')
-        #     self.parent.readLbl.config(foreground = 'red')
+        
+    
+    # def LEGACYopenWb(self):
+    #     '''Checks if REQUESTED FORMS folder exists in Desktop
+    #     Reads files and tries to find one with an incoming date
+    #     If not, new file is created with temporal name until delivery date selected
+    #     '''
+    #     if os.path.isdir(self.dirPath):
+    #         filesFolder = os.listdir(self.dirPath)
+    #         lastName,lastDate = self.checkNameDate(filesFolder)
+    #         if lastDate:
+    #             if lastDate > datetime.date.today():
+    #                 self.xlWorkbook = self.xl.Workbooks.Open(os.path.join(self.dirPath,lastName))
+    #                 self.xl.Visible = True
+    #                 self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+    #                 self.parent.readyVar.set(lastName)
+    #             else:
+    #                 self.newWb()
+    #         if not lastDate:
+    #             self.xlWorkbook = self.xl.Workbooks.Open(os.path.join(self.dirPath,'TEMPORAL REQUEST FORM.xlsx'))
+    #             self.xl.Visible = True
+    #             self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+    #             self.parent.readyVar.set('TEMPORAL REQUEST FORM.xlsx')
+    #     else:
+    #         self.newWb()
+    
+    # def LEGACYcheckNewWb(self):
+    #     '''If a workbook is opened it is used as workbook.
+    #     '''
+    #     wbCount = self.xl.Workbooks.Count
+    #     if wbCount != 0:
+    #         self.xlWorkbook = self.xl.Workbooks(self.xl.Workbooks(1).Name)
+    #         self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+    #         self.parent.readyVar.set(self.xl.Workbooks(1).Name)
+    #     else:
+    #         raise ValueError
 
-        wbCount = self.xl.Workbooks.Count
-        if wbCount == 0:
-            self.openWb()
-        else:
-            # If any workbook exists, check its names to find file
-            # If any matches, checks date. If multiple matches, opens most recent
-            # If none matches opens a new workbook
-            wbNames = [self.xl.Workbooks(i).Name for i in range(1,wbCount)]
-            lastName,_ = self.checkNameDate(wbNames)
-            if lastName:
-                self.xlWorkbook = self.xl.Workbooks.Open(lastName)
-                self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-                self.parent.readyVar.set(lastName)
-            elif not lastName:
-                self.openWb()
+    # def LEGACYcheckWb(self):
+    #     '''Check if workbooks are open, checks names
+    #     matches with template and finds coming dates.
+    #     If not workbooks opened searches for files in folders.
+    #     If file with coming date exists, it is used, if not
+    #     a new file is created with TEMPORAL REQUEST FORM.
+    #     This file will be used whenever it exists and should be
+    #     always renamed as soon as possible.
+    #     '''
+    #     # try:
+    #     #     self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
+    #     #     if not self.xlWorkbook:
+    #     #         #self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
+    #     #         self.xlWorkbook = self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
+    #     #         self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+    #     #         # self.readExcel()
+    #     #     else:
+    #     #         None
+    #     #     self.parent.readyVar.set('Ready')
+    #     #     self.parent.readLbl.config(foreground = 'green')
+    #     # except:
+    #     #     self.parent.readyVar.set('Open handover form')
+    #     #     self.parent.readLbl.config(foreground = 'red')
+
+    #     wbCount = self.xl.Workbooks.Count
+    #     if wbCount == 0:
+    #         self.openWb()
+    #     else:
+    #         # If any workbook exists, check its names to find file
+    #         # If any matches, checks date. If multiple matches, opens most recent
+    #         # If none matches opens a new workbook
+    #         wbNames = [self.xl.Workbooks(i).Name for i in range(1,wbCount)]
+    #         lastName,_ = self.checkNameDate(wbNames)
+    #         if lastName:
+    #             self.xlWorkbook = self.xl.Workbooks(lastName)
+    #             self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+    #             self.parent.readyVar.set(lastName)
+    #         elif not lastName:
+    #             self.openWb()
     
     def readExcel(self):
-        '''Reads current excel and creates file with all pumps included
+        '''Reads current excel and creates a file with all pumps included
         File used to check duplicates and do analytics
         '''
         # TODO: Think what happens if all this is deleted after moving to a diferent notebook frame
@@ -176,13 +298,13 @@ class XlReadWrite:
         tempDict = dict(zip(self.heads,list(tempMap)))
         # REVIEW: Is this the optimal way? create the dict every time the user changes a value?
         self.dfValues = pd.DataFrame(tempDict)
+        print(self.dfValues)
         #self.dfValues.append(tempDict, ignore_index = True)
 
     def processChanges(self,n,m,x):
         '''Function that process changes on excel
         Splits last value changed by () to get AI and values
         Adds dictionary with AI as keys and values as values to existing df
-
         ''' 
         # global changedValue
         # global addressChanged
@@ -205,6 +327,7 @@ class XlReadWrite:
             self.writeExcel()
         else: # Update value introduced by user in dfValues
             self.readExcel()
+        # TODO: after processing changes, trigger the table update (if exists)
 
     def writeExcel(self):
         ''' Function that writes last row introduced in the excel
@@ -226,6 +349,53 @@ class XlReadWrite:
         # Delete last edited cell
         self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = None 
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
+
+class ClientRequest:
+    '''Class that manages the reading and processing of the client requests
+    Updates the table using updateTable method triggered by XlReadWrite
+    '''
+    def __init__(self,parent):
+        self.myParent = parent # Frame class that invokes it
+        self.file = self.myParent.filePathEntry
+
+    def readExcel(self):
+        ''' Function that reads excel and inserts into a df
+        Currently it follows the Lloyds template (See Lloyd's template)
+        '''
+        self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
+
+    
+    def checkXL(self,xlClass):
+        '''Checks if excel file is in use by the program.
+        Updated if excel is opened. 
+        '''
+        pass
+    
+    def checkDate(self):
+        '''If excel is open, checks delivery date
+        Delivery date written in excel file if not present
+        Changes the name of the excel file if it does not include date
+        Pop up message if date excel file (name, cell) and client excel do not match.
+        '''
+        date = re.search(r'\d{2}-\d{2}-\d{4}',str(self.file))
+
+    def createTable(self):
+        '''Creates tkinter table with equipment from client excel
+        First 3 columns (Model, Settings, Request) should be static
+        Done column filled with pumps in excel file. Updated with updateTable
+        '''
+        # TODO: use Treeview with no children to create a table in tkinter
+        # LINK: https://stackoverflow.com/questions/50625306/what-is-the-best-way-to-show-data-in-a-table-in-tkinter/50651988#50651988
+
+        pass
+
+    def updateTable(self,xlClass):
+        '''Updates values on "Done" column
+        Triggered by the ReadXlClass when DataFrame is updated.
+        '''
+        # NOTE: TreeView set property to change value of item. 
+        pass
+
     
 
 if __name__ == "__main__":
