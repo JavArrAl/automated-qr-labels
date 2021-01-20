@@ -54,8 +54,8 @@ class XlReadWrite:
                 - Yes: Use that file
                 - No: Keep waiting until new file is opened
     '''
-    # FIXME: Working with any excel after opening or selecting the first excel will delete all new values introduced on the excel.
     # TODO: bring selected workbook to the top
+    # TODO: when a file is closed, let the user know the file is no longer open
     def __init__(self,parentFrame):
         self.xl = None
         self.parent = parentFrame
@@ -69,6 +69,7 @@ class XlReadWrite:
         '''Attempt to open excel
         If not  open, launches excel.
         '''
+        self.restartObjects()
         try:
             self.xl = win32.GetActiveObject('Excel.Application')
         except:
@@ -77,6 +78,14 @@ class XlReadWrite:
             except:
                 self.parent.readyVar.set('Excel not available. Please make sure excel is installed')# Gets name of file
                 self.parent.readLbl.config(foreground = 'red')
+    
+    def restartObjects(self):
+        '''Sets all win32 objects references to None
+        This is redundant, but was necessary to check possible problems
+        '''
+        self.xl = None
+        self.xlWorkbook = None
+        self.xlWorkbookEvents = None
 
     def checkNameDate(self,wbNames):
         '''Checks name file matches desired name
@@ -117,17 +126,18 @@ class XlReadWrite:
         That file will be the one to work with
         '''
 
-        self.openXl()     
+        self.openXl()    
         try:
             self.xlWorkbook = self.xl.Workbooks.Open(filePath)
             self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
             self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))# Gets name of file
             self.parent.readLbl.config(foreground = 'green')
-            self.readExcel()
+            self.xl.Visible = True
+            # variableFile.changedValue.trace('w',self.processChanges)
+            self.readExcel()            
         except:
             self.parent.readyVar.set('ERROR opening excel. Contact support')       
-        self.xl.Visible = True
-        variableFile.changedValue.trace('w',self.processChanges)
+        
     
     def fillXlOpenList(self):
         '''Creates a list with all opened excel files
@@ -156,7 +166,6 @@ class XlReadWrite:
             self.parent.readyVar.set(name)
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
-            variableFile.changedValue.trace('w',self.processChanges)
             self.readExcel()
         except:
             self.parent.readyVar.set('Error with excel file. Please panic')
@@ -170,10 +179,11 @@ class XlReadWrite:
         The file is named as REQUEST FORM + DATE.
         The date is introduced by the user through GUI
         '''
-        try:
-            self.xl = win32.GetActiveObject('Excel.Application')
-        except:
-            self.xl = win32.Dispatch('Excel.Application')
+        # try:
+        #     self.xl = win32.GetActiveObject('Excel.Application')
+        # except:
+        #     self.xl = win32.Dispatch('Excel.Application')
+        self.openXl()
 
         try:
             corrDate = self.checkDate(date)
@@ -190,7 +200,7 @@ class XlReadWrite:
                 self.xl.Visible = True
                 self.parent.readyVar.set(name)
                 self.parent.readLbl.config(foreground = 'green')
-                variableFile.changedValue.trace('w',self.processChanges)
+                # variableFile.changedValue.trace('w',self.processChanges)
                 self.readExcel()
             except PermissionError:
                 self.parent.fileExists()
@@ -273,7 +283,8 @@ class XlReadWrite:
     #             self.parent.readyVar.set(lastName)
     #         elif not lastName:
     #             self.openWb()
-    
+
+# TODO: re-think this whole part.
     def readExcel(self):
         '''Reads current excel and creates a file with all pumps included
         File used to check duplicates and do analytics
@@ -287,17 +298,18 @@ class XlReadWrite:
         vals = self.values[2:] # Values start at row 3
         self.xlHeadsAI = []
          # list with AIs corresponding to excel columns
-         # removed first and last item corresponding to ()
          # FIXME: if the excel has a column that is not in AI variableFile it will be a problem
         for head in self.heads:
             for key in variableFile.AI.keys():
                 if head in variableFile.AI[key]:
-                    self.xlHeadsAI.append(key[1:-1]) 
+                    self.xlHeadsAI.append(key[1:-1]) # removed first and last item corresponding to ()
         # Creates a df from the tuple of tuples with all the values in the excel
         tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
         tempDict = dict(zip(self.heads,list(tempMap)))
         # REVIEW: Is this the optimal way? create the dict every time the user changes a value?
         self.dfValues = pd.DataFrame(tempDict)
+        self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
+        print('From readExcel')
         print(self.dfValues)
         #self.dfValues.append(tempDict, ignore_index = True)
 
@@ -306,11 +318,9 @@ class XlReadWrite:
         Splits last value changed by () to get AI and values
         Adds dictionary with AI as keys and values as values to existing df
         ''' 
-        # global changedValue
-        # global addressChanged
-        # TODO: Think how to link last row in DataFrame with the Address of last modified value in excel
-        # FIXME: If AI in QR but not in excel, new entry created in df with all NaN
+        # TODO: Implement discard changes if read from QR on existing cell
         readQR = str(variableFile.changedValue.get())
+        print(readQR)
         valsAI = [tuple(i.split(')')) for i in readQR.split('(')]
         tempList = []
         # creates a dictionary with QR AI and values
@@ -323,11 +333,22 @@ class XlReadWrite:
                     if vals[0] == head:
                         tempList.append((self.heads[self.xlHeadsAI.index(head)],vals[1]))
                         break
-            self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
+            if tempList: # Only append values if list not empty            
+                self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
+                self.dfValues.replace({np.nan: None}, inplace = True)
+                self.formatExcel() # formats the dataframe to oder devices by model
             self.writeExcel()
         else: # Update value introduced by user in dfValues
-            self.readExcel()
+            # self.readExcel()
+            modCell = variableFile.addressChanged.split('$')[1:]
+            modCell[0] = ord(modCell[0].lower()) - 97 # Conver column letter to number
+            try:
+                self.dfValues.iloc[int(modCell[1]) - 2][modCell[0]] = readQR
+            except IndexError: # If user modifies cell after last row, read excel again
+                # TODO: think what to do if user modifies row after last included value
+                pass
         # TODO: after processing changes, trigger the table update (if exists)
+    
 
     def writeExcel(self):
         ''' Function that writes last row introduced in the excel
@@ -338,8 +359,10 @@ class XlReadWrite:
         # FIXME: If values are deleted, those cells would be still counted as with values
         # FIXME: If user introduces value below last row, new QR readings will be written after it
         # TODO: Sorting algorithms. If new scanned pump corresponds to same group, place it below
-        
-        lastRow = self.dfValues.index[-1] + 3
+        try:
+            lastRow = self.dfValues.index[-1] + 3
+        except IndexError:
+            lastRow = 3
         # NaN replaced with None for empty cells in excel
         newRow = list(self.dfValues.iloc[-1].replace({np.nan: None}))  
         iniCell = '$A${}'.format(lastRow)
@@ -349,6 +372,22 @@ class XlReadWrite:
         # Delete last edited cell
         self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = None 
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
+        # self.formatExcel()
+    
+    def formatExcel(self):
+        '''Function to groups all devices with same model together
+        # NOTE: Should the paramenters to order the list be selected by the user?
+        After reading QR, check model based on AI
+        Sort the dataframe. Return new index last row introduced
+        Insert new row on the corresponding excel position with (Range.Insert method)
+        # LINK: https://docs.microsoft.com/en-us/office/vba/api/excel.range.insert
+        '''
+        self.dfValues.sort_values(by = 'MODEL', inplace = True, ignore_idex = True)
+    
+    def manageDuplicates(self):
+        '''TODO: think what to do with the duplicates
+        '''
+        pass
 
 class ClientRequest:
     '''Class that manages the reading and processing of the client requests

@@ -465,12 +465,11 @@ class IntrusctLblFrame(tk.Frame):
         self.fileSelected = tk.StringVar()
         self.readyVar.set('Open excel')
 
-        #self.xl = None
         self.processClass = readqr.XlReadWrite(self)
+        variableFile.changedValue.trace('w',self.processClass.processChanges)
 
         # Top level
         self.instFrame = tk.Frame(self)
-        # self.readyFrame = tk.Frame(self)
         self.menuFrame = tk.Frame(self,width = 40)
 
         # Mid level
@@ -599,10 +598,10 @@ class IntrusctLblFrame(tk.Frame):
         self.processClass.newWb(date=dateStr)
     
     def wrognDate(self):
-        messagebox.showerror('Wrong date',' Wrong date.\n Please insert a correct date')
+        messagebox.showerror('Wrong date',' Wrong date.\n\n Please insert a correct date')
     
     def fileExists(self):
-        messagebox.showwarning('File already exists', 'A file with that date already exists.\nPlease select another date or delete/rename the existing file')
+        messagebox.showwarning('File already exists', 'A file with that date already exists.\n\nPlease select another date or delete/rename the existing file')
     
     def selectWb(self):
         if self.fileSelected:
@@ -737,6 +736,8 @@ class AnalyticsFrame(tk.Frame):
         self.analTblFrame.pack(side = tk.BOTTOM)
         self.analLbl.pack(fill = 'x')
         self.analTbl.pack(fill ='x')
+
+        # TODO: include button to format excel
 
 
 class CheckFrame(tk.Frame):
