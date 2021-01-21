@@ -26,4 +26,7 @@ def init():
     changedValue.set('')
 
 global addressChanged
+global previousValue
+
+previousValue = None
 addressChanged = None

@@ -11,12 +11,14 @@ import tkinter as tk
 
 import variableFile
 
+# (30)AMBIX ACTIV(21)21242770(13)21-12-2020(22)20468303
+
 class WorkbookEvents:
     def OnSheetSelectionChange(self, *args):
         '''Possible use to determine where the user is
         Might be useful to check whether correcting of adding new lines
         '''
-        pass
+        variableFile.previousValue = args[1].Value
         
     def OnSheetChange(self, *args):
         variableFile.addressChanged = args[1].Address
@@ -304,14 +306,21 @@ class XlReadWrite:
                 if head in variableFile.AI[key]:
                     self.xlHeadsAI.append(key[1:-1]) # removed first and last item corresponding to ()
         # Creates a df from the tuple of tuples with all the values in the excel
-        tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
-        tempDict = dict(zip(self.heads,list(tempMap)))
+        # tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
+        # tempDict = dict(zip(self.heads,list(tempMap)))
+        tempDict = self.excelValToDict(vals)
         # REVIEW: Is this the optimal way? create the dict every time the user changes a value?
         self.dfValues = pd.DataFrame(tempDict)
         self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
-        print('From readExcel')
-        print(self.dfValues)
         #self.dfValues.append(tempDict, ignore_index = True)
+    
+    def excelValToDict(self,vals):
+        '''Converts tuples from excel into a dictionary
+        Columns correspond to excel head values
+        '''
+        tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
+        tempDict = dict(zip(self.heads,list(tempMap)))
+        return tempDict
 
     def processChanges(self,n,m,x):
         '''Function that process changes on excel
@@ -323,11 +332,15 @@ class XlReadWrite:
         print(readQR)
         valsAI = [tuple(i.split(')')) for i in readQR.split('(')]
         tempList = []
+        try: # If multiple cells selected consider deleting
+            isDelete = all(item is None for tup in readQR for item in tup)
+        except:
+            isDelete = False
         # creates a dictionary with QR AI and values
         # Appends dictionary to df
         # NOTE: headsAI dependent on Excel column names. If not correct, wrong results.
         # NOTE: If any value introdcued by hand has () it will be counted as QR read
-        if valsAI[0][0] == '': # Input comes from QR
+        if valsAI[0][0] == '' and not isDelete: # Input comes from QR
             for vals in valsAI:
                 for head in self.xlHeadsAI:
                     if vals[0] == head:
@@ -335,19 +348,64 @@ class XlReadWrite:
                         break
             if tempList: # Only append values if list not empty            
                 self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
-                self.dfValues.replace({np.nan: None}, inplace = True)
-                self.formatExcel() # formats the dataframe to oder devices by model
+                self.dfValues.replace({np.nan: None}, inplace = True)               
+                # self.formatExcel() # formats the dataframe to oder devices by model
+            else:
+                # TODO: what if values are in () but no AI related. e.g: deleting multiple values
+                pass
             self.writeExcel()
+        elif isDelete:
+            self.deleteCell(readQR)
         else: # Update value introduced by user in dfValues
             # self.readExcel()
-            modCell = variableFile.addressChanged.split('$')[1:]
-            modCell[0] = ord(modCell[0].lower()) - 97 # Conver column letter to number
+            # modCell = variableFile.addressChanged.split('$')[1:]
+            # modCell[0] = ord(modCell[0].lower()) - 97 # Convert column letter to number
+            modCell = self.multipleCellChange()
             try:
-                self.dfValues.iloc[int(modCell[1]) - 2][modCell[0]] = readQR
+                # self.dfValues.iloc[int(modCell[1]) - 3][modCell[0]] = readQR
+                self.dfValues.iloc[modCell] = readQR
             except IndexError: # If user modifies cell after last row, read excel again
                 # TODO: think what to do if user modifies row after last included value
+                self.readExcel()
                 pass
         # TODO: after processing changes, trigger the table update (if exists)
+    
+    def deleteCell(self,read):
+        '''Function that proccesses the deleting of a cell/Range of cells
+        '''
+        modCell = self.multipleCellChange
+        tempDict = self.excelValToDict(read)
+        # TODO: delete cells with df.drop
+        # try:
+            #     self.dfValues.iloc[cellPrimer[0]:cellFinal[0], cellPrimer[1]:cellFinal[1]] = tempDict
+
+    def multipleCellChange(self):
+        '''Returns the range of cell/s used
+        '''
+        address = variableFile.addressChanged
+        if ':' in address:
+            cells = [c for a in address.split(':') for c in a.split('$') ]
+            cellRows = [int(cells[2]) - 3 , int(cells[5]) - 3]
+            cellCols = [ord(cells[1].lower()) - 97, ord(cells[4].lower()) - 97]
+            return [slice(cellRows[0],cellRows[1]), slice(cellCols[0],cellCols[1])]
+        else:
+            modCell = address.split('$')[1:]
+            retCell = [int(modCell[1]) - 3, ord(modCell[0].lower()) - 97] # Convert column letter to number
+            return retCell
+        
+        
+    def discardChangedCell(self):
+        '''If cell was previously ocupied and new data does not come from QR,
+        the previous value is restored.
+        '''
+        modCell = variableFile.addressChanged.split('$')[1:]
+        modCell[0] = ord(modCell[0].lower()) - 97 # Conver column letter to number
+        try:
+            self.dfValues.iloc[int(modCell[1]) - 2][modCell[0]]
+            if self.dfValues.iloc[int(modCell[1]) - 2][modCell[0]] != None: # If cursor is on cell with a value, the previous value is restored
+                self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
+        except: #If cell was not on dataframe, value is restored
+            self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
     
 
     def writeExcel(self):
@@ -370,7 +428,8 @@ class XlReadWrite:
         finCell = '${}${}'.format(finCol,lastRow)
         cellRange = '{}:{}'.format(iniCell,finCell)
         # Delete last edited cell
-        self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = None 
+        # self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = None
+        self.discardChangedCell()  
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
         # self.formatExcel()
     
