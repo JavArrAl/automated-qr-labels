@@ -3,6 +3,7 @@ import win32com.client as win32
 import datetime
 import os.path
 import shutil
+from ast import literal_eval
 
 import pandas as pd
 import numpy as np
@@ -12,6 +13,8 @@ import tkinter as tk
 import variableFile
 
 # (30)AMBIX ACTIV(21)21242770(13)21-12-2020(22)20468303
+# (30)CRONO 30(21)NL0411.16(13)21-12-2020
+#'$3:$3,$3:$24,$3:$25'
 
 class WorkbookEvents:
     def OnSheetSelectionChange(self, *args):
@@ -31,6 +34,7 @@ class WorkbookEvents:
         '''
         #if not win32.GetActiveObject('Excel.Application'): # Checks if excel is still running. 
         variableFile.excelOpen.set(tk.FALSE)
+        # TODO: when excelOpen set to FALSE change the GUI label to gray when corresponds
         pass
         
 
@@ -139,8 +143,7 @@ class XlReadWrite:
             self.readExcel()            
         except:
             self.parent.readyVar.set('ERROR opening excel. Contact support')       
-        
-    
+         
     def fillXlOpenList(self):
         '''Creates a list with all opened excel files
         This list corresponds to the values of combobox on GUI
@@ -173,7 +176,6 @@ class XlReadWrite:
             self.parent.readyVar.set('Error with excel file. Please panic')
             self.parent.readLbl.config(foreground = 'red')
 
-    
     def newWb(self,date=None):
         '''Creates new request file in REQUEST FORM folder
         If folder does not exists, it is created.
@@ -203,95 +205,17 @@ class XlReadWrite:
                 self.parent.readyVar.set(name)
                 self.parent.readLbl.config(foreground = 'green')
                 # variableFile.changedValue.trace('w',self.processChanges)
+                self.xlWorkbook.Worksheets('Sheet1').Range('$B$1').Value = corrDate
                 self.readExcel()
             except PermissionError:
                 self.parent.fileExists()
         except ValueError:
             self.parent.wrognDate()
 
-        
-    
-    # def LEGACYopenWb(self):
-    #     '''Checks if REQUESTED FORMS folder exists in Desktop
-    #     Reads files and tries to find one with an incoming date
-    #     If not, new file is created with temporal name until delivery date selected
-    #     '''
-    #     if os.path.isdir(self.dirPath):
-    #         filesFolder = os.listdir(self.dirPath)
-    #         lastName,lastDate = self.checkNameDate(filesFolder)
-    #         if lastDate:
-    #             if lastDate > datetime.date.today():
-    #                 self.xlWorkbook = self.xl.Workbooks.Open(os.path.join(self.dirPath,lastName))
-    #                 self.xl.Visible = True
-    #                 self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-    #                 self.parent.readyVar.set(lastName)
-    #             else:
-    #                 self.newWb()
-    #         if not lastDate:
-    #             self.xlWorkbook = self.xl.Workbooks.Open(os.path.join(self.dirPath,'TEMPORAL REQUEST FORM.xlsx'))
-    #             self.xl.Visible = True
-    #             self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-    #             self.parent.readyVar.set('TEMPORAL REQUEST FORM.xlsx')
-    #     else:
-    #         self.newWb()
-    
-    # def LEGACYcheckNewWb(self):
-    #     '''If a workbook is opened it is used as workbook.
-    #     '''
-    #     wbCount = self.xl.Workbooks.Count
-    #     if wbCount != 0:
-    #         self.xlWorkbook = self.xl.Workbooks(self.xl.Workbooks(1).Name)
-    #         self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-    #         self.parent.readyVar.set(self.xl.Workbooks(1).Name)
-    #     else:
-    #         raise ValueError
-
-    # def LEGACYcheckWb(self):
-    #     '''Check if workbooks are open, checks names
-    #     matches with template and finds coming dates.
-    #     If not workbooks opened searches for files in folders.
-    #     If file with coming date exists, it is used, if not
-    #     a new file is created with TEMPORAL REQUEST FORM.
-    #     This file will be used whenever it exists and should be
-    #     always renamed as soon as possible.
-    #     '''
-    #     # try:
-    #     #     self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
-    #     #     if not self.xlWorkbook:
-    #     #         #self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
-    #     #         self.xlWorkbook = self.xl.Workbooks('REQUEST FORM TEMPLATE.xlsx')
-    #     #         self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-    #     #         # self.readExcel()
-    #     #     else:
-    #     #         None
-    #     #     self.parent.readyVar.set('Ready')
-    #     #     self.parent.readLbl.config(foreground = 'green')
-    #     # except:
-    #     #     self.parent.readyVar.set('Open handover form')
-    #     #     self.parent.readLbl.config(foreground = 'red')
-
-    #     wbCount = self.xl.Workbooks.Count
-    #     if wbCount == 0:
-    #         self.openWb()
-    #     else:
-    #         # If any workbook exists, check its names to find file
-    #         # If any matches, checks date. If multiple matches, opens most recent
-    #         # If none matches opens a new workbook
-    #         wbNames = [self.xl.Workbooks(i).Name for i in range(1,wbCount)]
-    #         lastName,_ = self.checkNameDate(wbNames)
-    #         if lastName:
-    #             self.xlWorkbook = self.xl.Workbooks(lastName)
-    #             self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-    #             self.parent.readyVar.set(lastName)
-    #         elif not lastName:
-    #             self.openWb()
-
-# TODO: re-think this whole part.
     def readExcel(self):
         '''Reads current excel and creates a file with all pumps included
         File used to check duplicates and do analytics
         '''
-        # TODO: Think what happens if all this is deleted after moving to a diferent notebook frame
         try:
             self.values = self.xlWorkbook.Worksheets('Sheet1').UsedRange.Value
         except:
@@ -305,15 +229,11 @@ class XlReadWrite:
             for key in variableFile.AI.keys():
                 if head in variableFile.AI[key]:
                     self.xlHeadsAI.append(key[1:-1]) # removed first and last item corresponding to ()
-        # Creates a df from the tuple of tuples with all the values in the excel
-        # tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
-        # tempDict = dict(zip(self.heads,list(tempMap)))
         tempDict = self.excelValToDict(vals)
-        # REVIEW: Is this the optimal way? create the dict every time the user changes a value?
         self.dfValues = pd.DataFrame(tempDict)
         self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
         #self.dfValues.append(tempDict, ignore_index = True)
-    
+
     def excelValToDict(self,vals):
         '''Converts tuples from excel into a dictionary
         Columns correspond to excel head values
@@ -327,13 +247,11 @@ class XlReadWrite:
         Splits last value changed by () to get AI and values
         Adds dictionary with AI as keys and values as values to existing df
         ''' 
-        # TODO: Implement discard changes if read from QR on existing cell
         readQR = str(variableFile.changedValue.get())
-        print(readQR)
         valsAI = [tuple(i.split(')')) for i in readQR.split('(')]
         tempList = []
         try: # If multiple cells selected consider deleting
-            isDelete = all(item is None for tup in readQR for item in tup)
+            isDelete = all(item is None for tup in literal_eval(readQR) for item in tup)
         except:
             isDelete = False
         # creates a dictionary with QR AI and values
@@ -355,17 +273,12 @@ class XlReadWrite:
                 pass
             self.writeExcel()
         elif isDelete:
-            self.deleteCell(readQR)
+            self.deleteCell(literal_eval(readQR))
         else: # Update value introduced by user in dfValues
-            # self.readExcel()
-            # modCell = variableFile.addressChanged.split('$')[1:]
-            # modCell[0] = ord(modCell[0].lower()) - 97 # Convert column letter to number
             modCell = self.multipleCellChange()
             try:
-                # self.dfValues.iloc[int(modCell[1]) - 3][modCell[0]] = readQR
-                self.dfValues.iloc[modCell] = readQR
+                self.dfValues.iloc[modCell[0],modCell[1]] = readQR
             except IndexError: # If user modifies cell after last row, read excel again
-                # TODO: think what to do if user modifies row after last included value
                 self.readExcel()
                 pass
         # TODO: after processing changes, trigger the table update (if exists)
@@ -373,40 +286,54 @@ class XlReadWrite:
     def deleteCell(self,read):
         '''Function that proccesses the deleting of a cell/Range of cells
         '''
-        modCell = self.multipleCellChange
+        modCell = self.multipleCellChange()
         tempDict = self.excelValToDict(read)
-        # TODO: delete cells with df.drop
-        # try:
-            #     self.dfValues.iloc[cellPrimer[0]:cellFinal[0], cellPrimer[1]:cellFinal[1]] = tempDict
+        tempDf = pd.DataFrame(tempDict)
+        try:
+            self.dfValues.iloc[modCell[0],modCell[1]] = tempDf.values
+        except ValueError:
+            modCell = self.returnOverRange()   
+            self.dfValues.iloc[modCell[0],modCell[1]] = None
 
-    def multipleCellChange(self):
-        '''Returns the range of cell/s used
+    def returnOverRange(self):
+        '''If selected range to delete is larger than the actual dataframe
+        Start at the first cell and complete from there
         '''
-        address = variableFile.addressChanged
+        singleCell = variableFile.addressChanged.split(':')
+        firstCell = self.multipleCellChange(singleCell = singleCell[0])
+        lastCell = self.multipleCellChange(singleCell = singleCell[1])
+        if lastCell[0] > self.dfValues.shape[0]:
+            lastCell[0] = self.dfValues.shape[0]
+        if lastCell[1] > self.dfValues.shape[1]:
+            lastCell[1] = self.dfValues.shape[1]
+        return [slice(firstCell[0],lastCell[0]+1), slice(firstCell[1],lastCell[1]+1)]
+
+    def multipleCellChange(self, singleCell = None):
+        '''Returns the range of cell/s used
+        When using slice objects, adding one to include the last value
+        singleCell used when only one Cell is to be translated into df indexes
+        '''
+        if singleCell == None:
+            address = variableFile.addressChanged
+        else:
+            address = singleCell
         if ':' in address:
             cells = [c for a in address.split(':') for c in a.split('$') ]
             cellRows = [int(cells[2]) - 3 , int(cells[5]) - 3]
             cellCols = [ord(cells[1].lower()) - 97, ord(cells[4].lower()) - 97]
-            return [slice(cellRows[0],cellRows[1]), slice(cellCols[0],cellCols[1])]
+            if cellRows[0] == cellRows[1]: # Only one row selected
+                if cellCols[0] == cellRows[1]:
+                    return [cellRows[0], cellCols[0]]
+                else:
+                    return [cellRows[0], slice(cellCols[0],cellCols[1]+1)]
+            elif cellRows[0] == cellRows[1]: # Only one column selected
+                return [slice(cellRows[0],cellRows[1]), cellCols[0] ]
+            # If multiple rows and columns selected.
+            return [slice(cellRows[0],cellRows[1]+1), slice(cellCols[0],cellCols[1]+1)]
         else:
             modCell = address.split('$')[1:]
             retCell = [int(modCell[1]) - 3, ord(modCell[0].lower()) - 97] # Convert column letter to number
-            return retCell
-        
-        
-    def discardChangedCell(self):
-        '''If cell was previously ocupied and new data does not come from QR,
-        the previous value is restored.
-        '''
-        modCell = variableFile.addressChanged.split('$')[1:]
-        modCell[0] = ord(modCell[0].lower()) - 97 # Conver column letter to number
-        try:
-            self.dfValues.iloc[int(modCell[1]) - 2][modCell[0]]
-            if self.dfValues.iloc[int(modCell[1]) - 2][modCell[0]] != None: # If cursor is on cell with a value, the previous value is restored
-                self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
-        except: #If cell was not on dataframe, value is restored
-            self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
-    
+            return retCell    
 
     def writeExcel(self):
         ''' Function that writes last row introduced in the excel
@@ -427,11 +354,12 @@ class XlReadWrite:
         finCol = chr(len(self.heads) + 96).upper()
         finCell = '${}${}'.format(finCol,lastRow)
         cellRange = '{}:{}'.format(iniCell,finCell)
-        # Delete last edited cell
-        # self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = None
-        self.discardChangedCell()  
+        # Restore last edited cell
+        # FIXME: The font and size of the previous value to be written on the cell has changed.
+        # It could be related with the excel license, check with proper internet.
+        self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = str(variableFile.previousValue)
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
-        # self.formatExcel()
+        self.formatExcel()
     
     def formatExcel(self):
         '''Function to groups all devices with same model together
@@ -440,9 +368,21 @@ class XlReadWrite:
         Sort the dataframe. Return new index last row introduced
         Insert new row on the corresponding excel position with (Range.Insert method)
         # LINK: https://docs.microsoft.com/en-us/office/vba/api/excel.range.insert
+        # TODO: change Column A and C for parameters selected by the user. Multiple parameters could be used
+        # TODO: Think how to incorporate this into the code
         '''
-        self.dfValues.sort_values(by = 'MODEL', inplace = True, ignore_idex = True)
-    
+        allCells = f'$A$3:${chr(len(self.heads) + 96).upper()}${self.dfValues.index[-1] + 3}' 
+        # Excel sorting
+        self.xlWorkbook.Worksheets('Sheet1').Range(allCells).Sort(
+            Key1 = self.xlWorkbook.Worksheets('Sheet1').Range('$A$3'), # Model
+            Key2 = self.xlWorkbook.Worksheets('Sheet1').Range('$C$3'), # Date
+            Orientation = 1, #This should be 2, but seems to be wrong.
+            DataOption2 = 1 # Treats text as numeric
+        )
+        # TODO: delete empty rows excel
+        a = self.xlWorkbook.Worksheets('Sheet1').Range(allCells).SpecialCells(Type = 4).EntireRow #Delete()
+        self.readExcel() # "Update" the data frame
+
     def manageDuplicates(self):
         '''TODO: think what to do with the duplicates
         '''
