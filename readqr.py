@@ -12,7 +12,7 @@ import tkinter as tk
 
 import variableFile
 
-# (30)AMBIX ACTIV(21)21242770(13)21-12-2020(22)20468303
+# (30)AMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
 # (30)CRONO 30(21)NL0411.16(13)21-12-2020
 #'$3:$3,$3:$24,$3:$25'
 
@@ -231,7 +231,7 @@ class XlReadWrite:
                     self.xlHeadsAI.append(key[1:-1]) # removed first and last item corresponding to ()
         tempDict = self.excelValToDict(vals)
         self.dfValues = pd.DataFrame(tempDict)
-        self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
+        # self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
         #self.dfValues.append(tempDict, ignore_index = True)
 
     def excelValToDict(self,vals):
@@ -257,7 +257,6 @@ class XlReadWrite:
         # creates a dictionary with QR AI and values
         # Appends dictionary to df
         # NOTE: headsAI dependent on Excel column names. If not correct, wrong results.
-        # NOTE: If any value introdcued by hand has () it will be counted as QR read
         if valsAI[0][0] == '' and not isDelete: # Input comes from QR
             for vals in valsAI:
                 for head in self.xlHeadsAI:
@@ -268,12 +267,10 @@ class XlReadWrite:
                 self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
                 self.dfValues.replace({np.nan: None}, inplace = True)               
                 # self.formatExcel() # formats the dataframe to oder devices by model
-            else:
-                # TODO: what if values are in () but no AI related. e.g: deleting multiple values
-                pass
             self.writeExcel()
         elif isDelete:
             self.deleteCell(literal_eval(readQR))
+            self.formatExcel()
         else: # Update value introduced by user in dfValues
             modCell = self.multipleCellChange()
             try:
@@ -294,7 +291,7 @@ class XlReadWrite:
         except ValueError:
             modCell = self.returnOverRange()   
             self.dfValues.iloc[modCell[0],modCell[1]] = None
-
+        
     def returnOverRange(self):
         '''If selected range to delete is larger than the actual dataframe
         Start at the first cell and complete from there
@@ -337,13 +334,10 @@ class XlReadWrite:
 
     def writeExcel(self):
         ''' Function that writes last row introduced in the excel
-        It considers that the firts two rows of the excel are:
+        It assumes the firts two rows of the excel are:
             1.- Date of delivery
             2.- Column heads
         '''
-        # FIXME: If values are deleted, those cells would be still counted as with values
-        # FIXME: If user introduces value below last row, new QR readings will be written after it
-        # TODO: Sorting algorithms. If new scanned pump corresponds to same group, place it below
         try:
             lastRow = self.dfValues.index[-1] + 3
         except IndexError:
@@ -357,7 +351,7 @@ class XlReadWrite:
         # Restore last edited cell
         # FIXME: The font and size of the previous value to be written on the cell has changed.
         # It could be related with the excel license, check with proper internet.
-        self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = str(variableFile.previousValue)
+        self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
         self.formatExcel()
     
@@ -369,9 +363,15 @@ class XlReadWrite:
         Insert new row on the corresponding excel position with (Range.Insert method)
         # LINK: https://docs.microsoft.com/en-us/office/vba/api/excel.range.insert
         # TODO: change Column A and C for parameters selected by the user. Multiple parameters could be used
-        # TODO: Think how to incorporate this into the code
         '''
-        allCells = f'$A$3:${chr(len(self.heads) + 96).upper()}${self.dfValues.index[-1] + 3}' 
+        
+        self.xlWorkbook.Worksheets('Sheet1').Unprotect(Password = variableFile.templatePass)
+        lastCol = chr(len(self.heads) + 96).upper()
+        lastRow = self.dfValues.index[-1] + 3
+        allCells = f'$A$3:${lastCol}${lastRow}' 
+
+        self.removeEmptyRows(lastCol)
+
         # Excel sorting
         self.xlWorkbook.Worksheets('Sheet1').Range(allCells).Sort(
             Key1 = self.xlWorkbook.Worksheets('Sheet1').Range('$A$3'), # Model
@@ -379,9 +379,24 @@ class XlReadWrite:
             Orientation = 1, #This should be 2, but seems to be wrong.
             DataOption2 = 1 # Treats text as numeric
         )
-        # TODO: delete empty rows excel
-        a = self.xlWorkbook.Worksheets('Sheet1').Range(allCells).SpecialCells(Type = 4).EntireRow #Delete()
+
+        self.xlWorkbook.Worksheets('Sheet1').Protect(Password = variableFile.templatePass)
+
         self.readExcel() # "Update" the data frame
+
+    def removeEmptyRows(self,lastCol):
+        '''Removes empty rows from excel and df
+        '''
+        wholeDfIndex = self.dfValues.index.to_list()
+        nonNanDfIndex = self.dfValues.dropna(how = 'all').index.to_list()
+        nanDfIndex = list(set(wholeDfIndex) - set(nonNanDfIndex))
+        nanDfIndex.sort(reverse=True) # DataFrame indexes of whole NaN rows
+
+        for item in nanDfIndex:
+            row = f'$A${item + 3}:${lastCol}${item + 3}'
+            self.xlWorkbook.Worksheets('Sheet1').Range(row).EntireRow.Delete(Shift = -4162)
+
+        self.dfValues.dropna(how = 'all', inplace = True)
 
     def manageDuplicates(self):
         '''TODO: think what to do with the duplicates

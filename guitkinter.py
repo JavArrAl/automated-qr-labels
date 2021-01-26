@@ -737,8 +737,6 @@ class AnalyticsFrame(tk.Frame):
         self.analLbl.pack(fill = 'x')
         self.analTbl.pack(fill ='x')
 
-        # TODO: include button to format excel
-
 
 class CheckFrame(tk.Frame):
     def __init__(self,myParent):

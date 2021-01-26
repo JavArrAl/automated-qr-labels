@@ -1,6 +1,9 @@
 import tkinter as tk
 
 
+
+templatePass = 12345
+
 AI = {
     '(01)': ['Job No', 'Job_No', 'Job Number', 'Job_Number'],
     '(02)': ['Job Status', 'Job_Status'],
