@@ -380,9 +380,11 @@ class XlReadWrite:
             DataOption2 = 1 # Treats text as numeric
         )
 
-        self.xlWorkbook.Worksheets('Sheet1').Protect(Password = variableFile.templatePass)
-
         self.readExcel() # "Update" the data frame
+
+        self.manageDuplicates(lastCol)
+
+        self.xlWorkbook.Worksheets('Sheet1').Protect(Password = variableFile.templatePass)
 
     def removeEmptyRows(self,lastCol):
         '''Removes empty rows from excel and df
@@ -398,10 +400,16 @@ class XlReadWrite:
 
         self.dfValues.dropna(how = 'all', inplace = True)
 
-    def manageDuplicates(self):
+    def manageDuplicates(self, lastCol):
         '''TODO: think what to do with the duplicates
+        After updating Df find duplicates in pandas
+        Color cells with excel.
+        # NOTE: see what happens with colored rows after the rows are ordered.
         '''
-        pass
+        duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
+        for item in duplicatesDevices:
+            toColorRange = f'$A${item + 3}:${lastCol}${item + 3}'
+            self.xlWorkbook.Worksheets('Sheet1').Range(toColorRange).Interior.ColorIndex = 44
 
 class ClientRequest:
     '''Class that manages the reading and processing of the client requests
