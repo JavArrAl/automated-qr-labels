@@ -12,7 +12,7 @@ import tkinter as tk
 
 import variableFile
 
-# (30)AMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
+# (30)BAAMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
 # (30)CRONO 30(21)NL0411.16(13)21-12-2020
 #'$3:$3,$3:$24,$3:$25'
 
@@ -401,10 +401,8 @@ class XlReadWrite:
         self.dfValues.dropna(how = 'all', inplace = True)
 
     def manageDuplicates(self, lastCol):
-        '''TODO: think what to do with the duplicates
-        After updating Df find duplicates in pandas
+        '''After updating Df find duplicates in pandas
         Color cells with excel.
-        # NOTE: see what happens with colored rows after the rows are ordered.
         '''
         duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
         for item in duplicatesDevices:
