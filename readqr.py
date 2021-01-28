@@ -60,16 +60,12 @@ class XlReadWrite:
                 - Yes: Use that file
                 - No: Keep waiting until new file is opened
     '''
-    # TODO: bring selected workbook to the top
     # TODO: when a file is closed, let the user know the file is no longer open
     def __init__(self,parentFrame):
         self.xl = None
         self.parent = parentFrame
         self.xlWorkbook = None
         self.dirPath = os.path.expanduser('~\\Desktop\\REQUEST FORMS')
-        #self.dfValues = pd.DataFrame()
-        # self.checkWb()
-        # self.readExcel()
     
     def openXl(self):
         '''Attempt to open excel
@@ -139,7 +135,7 @@ class XlReadWrite:
             self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))# Gets name of file
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
-            # variableFile.changedValue.trace('w',self.processChanges)
+            variableFile.excelOpen.set(tk.TRUE)
             self.readExcel()            
         except:
             self.parent.readyVar.set('ERROR opening excel. Contact support')       
@@ -171,6 +167,7 @@ class XlReadWrite:
             self.parent.readyVar.set(name)
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
+            variableFile.excelOpen.set(tk.TRUE)
             self.readExcel()
         except:
             self.parent.readyVar.set('Error with excel file. Please panic')
@@ -204,8 +201,8 @@ class XlReadWrite:
                 self.xl.Visible = True
                 self.parent.readyVar.set(name)
                 self.parent.readLbl.config(foreground = 'green')
-                # variableFile.changedValue.trace('w',self.processChanges)
                 self.xlWorkbook.Worksheets('Sheet1').Range('$B$1').Value = corrDate
+                variableFile.excelOpen.set(tk.TRUE) # NOTE: This could be done with events
                 self.readExcel()
             except PermissionError:
                 self.parent.fileExists()
@@ -233,6 +230,8 @@ class XlReadWrite:
         self.dfValues = pd.DataFrame(tempDict)
         # self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
         #self.dfValues.append(tempDict, ignore_index = True)
+        # TODO: Finish this
+        self.parent.myParent.updateTable(self.returnCountDevices)
 
     def excelValToDict(self,vals):
         '''Converts tuples from excel into a dictionary
@@ -408,6 +407,13 @@ class XlReadWrite:
         for item in duplicatesDevices:
             toColorRange = f'$A${item + 3}:${lastCol}${item + 3}'
             self.xlWorkbook.Worksheets('Sheet1').Range(toColorRange).Interior.ColorIndex = 44
+    
+    def returnCountDevices(self):
+        '''Returns the current count of items on df by model
+        Function used to update the table on GUI
+        # TODO: Finish this something like this: a.groupby(by=['Pump Type']).count()
+        # TODO: Think how to map Lloyd's pump names with QR names
+        '''
 
 class ClientRequest:
     '''Class that manages the reading and processing of the client requests
@@ -415,13 +421,15 @@ class ClientRequest:
     '''
     def __init__(self,parent):
         self.myParent = parent # Frame class that invokes it
-        self.file = self.myParent.filePathEntry
 
     def readExcel(self):
         ''' Function that reads excel and inserts into a df
         Currently it follows the Lloyds template (See Lloyd's template)
+        Returns df with two columns, pump type and its requests which are not 0
         '''
+        self.file = self.myParent.filePathEntry
         self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
+        return self.clientXl[self.clientXl['Request'] != 0][['Pump Type','Request','Settings']]
 
     
     def checkXL(self,xlClass):
@@ -448,7 +456,7 @@ class ClientRequest:
 
         pass
 
-    def updateTable(self,xlClass):
+    def updateTable(self,dataFrame):
         '''Updates values on "Done" column
         Triggered by the ReadXlClass when DataFrame is updated.
         '''

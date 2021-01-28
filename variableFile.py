@@ -13,7 +13,7 @@ AI = {
     '(13)': ['Work_End_Date', 'Work End Date','Service_Date', 'Service Date','SERVICE DATE','SERVICE_DATE'],
     '(21)': ['Serial_Number', ' Serial Number', 'S/N', 'S No', 'S_No', 'Serial No', 'Serial_No','S/No'],
     '(22)': ['DS Serial No', 'DS_Serial_No', ' Docking Station', 'Docking_Station', 'Docking Station SN', 'Docking_Station_SN', 'DS_SN', 'DS SN', 'DS SNo', 'DS_SNo', 'Docking STN', 'DOCKING STN'],
-    '(30)': ['Equipment_Model', 'Equipment Model', 'Model', 'Device Type', 'Device_Type','MODEL'],
+    '(30)': ['Equipment_Model', 'Equipment Model', 'Model', 'Device Type', 'Device_Type','MODEL', 'Pump type', 'PUMP TYPE', 'Pump Type','pump type'],
     '(90)': ['Settings', 'Configuration','SETTINGS'],
     '(91)': ['Consumables','CONSUMABLES']
 }

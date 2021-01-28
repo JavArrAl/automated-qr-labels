@@ -9,6 +9,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import pandas as pd
+import numpy as np
 
 import barcd
 import readqr
@@ -446,6 +447,15 @@ class ScanFrame(tk.Frame):
         self.instFrame.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
         self.reqPumpFrame.pack(fill = tk.BOTH, expand = True)
         self.analyticFrame.pack(side = tk.BOTTOM, fill = tk.BOTH, expand = True)
+    
+    def returnFileClient(self):
+        return self.reqPumpFrame.filePathEntry
+
+    def returnReadDf(self):
+        return self.instFrame.processClass.dfValues
+
+    def updateTable(self, dataFrameCount):
+        self.analyticFrame.updateTable(dataFrameCount)           
 
 
 class IntrusctLblFrame(tk.Frame):
@@ -455,6 +465,7 @@ class IntrusctLblFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         # Variables
+        self.myParent = myParent
         self.readyVar = tk.StringVar()
         self.dayVar = tk.StringVar()
         self.dayVar.set('DD')
@@ -467,6 +478,7 @@ class IntrusctLblFrame(tk.Frame):
 
         self.processClass = readqr.XlReadWrite(self)
         variableFile.changedValue.trace('w',self.processClass.processChanges)
+        variableFile.excelOpen.trace('w',self.closedFile)
 
         # Top level
         self.instFrame = tk.Frame(self)
@@ -610,75 +622,10 @@ class IntrusctLblFrame(tk.Frame):
     def updateCombobox(self,event):
         self.selectList['values'] = self.processClass.fillXlOpenList()
 
-
-    
-    # def checkExistXl(self):
-    #     '''Function that constantly checks if excel is open
-    #     If it is, values can be processed, label set to Ready
-    #     If not, display msg when input detected, label set to Red
-    #     If excel is open, set "excelOpen" var to TRUE
-    #     '''
-    #     # global changedValue
-    #     self.stopXl = self.after(1000, self.checkExistXl)
-    #     try:
-    #         # win32.GetActiveObject('Excel.Application')
-    #         self.xl = win32.GetActiveObject('Excel.Application')
-    #         self.processClass = readqr.XlReadWrite(self, self.xl)
-    #         variableFile.changedValue.trace('w', self.processClass.processChanges) # If value changes process function is called
-    #         variableFile.changedValue.trace('w',self.cehckVarXl)
-    #         self.after_cancel(self.stopXl)
-    #         # self.stopWb = self.after(500,self.checkExistsWb)
-    #         variableFile.excelOpen.set(tk.TRUE)
-    #         self.checkExistsWb()
-    #     except:
-    #         self.readyVar.set('Open excel')
-    #         self.readLbl.config(foreground = 'red')
-    #         self.stopXl = self.after(1000, self.checkExistXl)
-    
-    # def checkExistsWb(self):
-    #     self.readyVar.set('Open handover form')
-    #     self.readLbl.config(foreground = 'orange')
-    #     self.stopWb = self.after(1000,self.checkExistsWb)
-    #     try:
-    #         self.after_cancel(self.stopWb)
-    #         self.processClass.checkNewWb()
-    #     except ValueError:
-    #         self.stopWb = self.after(1000,self.checkExistsWb)
-
-    # def cehckVarXl(self,n,m,x):
-    #     '''Called when the excel application is closed
-    #     Launches the function with after method to check if Xl is open
-    #     '''
-    #     if variableFile.excelOpen.get():
-    #         pass
-    #     else:
-    #         self.checkExistXl()    
-        
-
-
-    # def launchXl(self):
-    #     '''First function to be launched when Scan tab is opened
-    #     Reads or Opens excel file depending on the user interaction
-    #     '''        
-    #     try:
-    #         win32.GetActiveObject('Excel.Application')
-    #         if not self.xl:
-    #             self.xl = win32.GetActiveObject('Excel.Application')
-    #             self.processClass = readqr.XlReadWrite(self,self.xl)
-    #             variableFile.changedValue.trace('w',self.processClass.processChanges)
-    #             variableFile.excelOpen.set(tk.TRUE)
-    #             variableFile.excelOpen.trace('w',self.cehckVarXl)
-    #             self.processClass.checkWb()
-    #         else:
-    #             self.processClass.checkWb()
-    #     except:
-    #         self.xl = win32.Dispatch('Excel.Application')
-    #         self.processClass = readqr.XlReadWrite(self,self.xl)
-    #         variableFile.changedValue.trace('w',self.processClass.processChanges)
-    #         variableFile.excelOpen.set(tk.TRUE)
-    #         variableFile.excelOpen.trace('w',self.cehckVarXl)
-    #         self.processClass.openWb()
-                
+    def closedFile(self,n,m,x):
+        if variableFile.excelOpen.get() == False:
+            self.readyVar.set('Open Excel')# Gets name of file
+            self.readLbl.config(foreground = 'gray')     
 
 
 class ReqPumpFrame(tk.Frame):
@@ -687,6 +634,7 @@ class ReqPumpFrame(tk.Frame):
     '''
     def __init__(self, myParent):
         tk.Frame.__init__(self,myParent)
+        self.myParent = myParent
         self.filePathEntry = tk.StringVar()
         self.filePathEntry.set('')
 
@@ -697,12 +645,12 @@ class ReqPumpFrame(tk.Frame):
             text = 'Requested pumps excel')
         self.fileEntry = tk.Entry(
             self.askFileFrame,
-            text = self.filePathEntry,
+            textvariable = self.filePathEntry,
             width = 80)
         self.browBtt = tk.Button(
             self.askFileFrame,
             text = 'Browse',
-            command = lambda: self.fileBtw)
+            command = lambda: self.fileBtw())
 
         self.lblFrame.pack(side = tk.TOP, anchor = tk.W)
         self.askFileFrame.pack(anchor = tk.W)
@@ -712,12 +660,13 @@ class ReqPumpFrame(tk.Frame):
 
     def fileBtw(self):
         # excel file browser
-        self.filePathEntry.set(
-            filedialog.askopenfilename(
+        self.filePathEntry = filedialog.askopenfilename(
                 title = "Select file",
-                filetypes = (('Excel file', '*.xlsx'), ('Excel file', '*.xls'), ('All files', '*.*'),)))
-        self.fileEntry.delete(0,last = tk.END)
-        self.fileEntry.insert(0,self.filePathEntry)
+                filetypes = (('Excel file', '*.xlsx'), ('Excel file', '*.xls'), ('All files', '*.*'),))
+        if self.filePathEntry:
+            self.fileEntry.delete(0,last = tk.END)
+            self.fileEntry.insert(0,self.filePathEntry)
+            self.myParent.analyticFrame.populateTableClient()
 
 
 class AnalyticsFrame(tk.Frame):
@@ -726,16 +675,57 @@ class AnalyticsFrame(tk.Frame):
     '''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
+        self.myParent = myParent
         self.analLblFrame = tk.Frame(self)
         self.analTblFrame = tk.Frame(self)
         self.analLbl = tk.Label(self.analLblFrame, text = 'Analytics')
+        self.filePathEntry = None
+        self.tableClientRequest = readqr.ClientRequest(self)
         # TODO: Implement table with analytics of current pumps
-        self.analTbl = tk.Label(self.analTblFrame, text = 'Here goes the table')
-
+        self.colNames = ['Model', 'Requested','Settings', 'Current']
+        self.analTbl = self.createTable()
+        
+        self.requestsBar = tk.Scrollbar(self.analTblFrame)     
+        self.requestsBar.config(command = self.analTbl.yview)
+        
         self.analLblFrame.pack(side = tk.TOP)
         self.analTblFrame.pack(side = tk.BOTTOM)
         self.analLbl.pack(fill = 'x')
-        self.analTbl.pack(fill ='x')
+        self.requestsBar.pack(side = tk.RIGHT, fill = 'y')
+        self.analTbl.pack(side = tk.LEFT, fill = 'x')     
+    
+    def createTable(self):
+        '''Initiates tables with especific columns and widths
+        '''
+        requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings')
+        for item in self.colNames:
+            requestTable.heading(item, text = item)
+        
+        requestTable.column('Model', width = 200)
+        requestTable.column('Requested', width = 100)
+        requestTable.column('Settings', width = 160)
+        requestTable.column('Current', width = 100)
+        return requestTable
+    
+    def populateTableClient(self):
+        '''Fills table with the request form from the client
+        '''
+        self.filePathEntry = self.myParent.returnFileClient()
+        tempDf = self.tableClientRequest.readExcel()
+        tempDf.replace({np.nan: ''}, inplace = True) 
+        tag = None
+        for row in range(0,tempDf.shape[0]):
+            if row % 2 == 0:
+                tag = 'even'
+            else:
+                tag = 'odd'
+            self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],''), tags = (tag,))
+        self.analTbl.tag_configure('even', background = 'light sky blue')
+
+    def updateTable(self, dataFrameCount):
+        '''Updates table using the dataFrameCount
+        '''
+        
 
 
 class CheckFrame(tk.Frame):
