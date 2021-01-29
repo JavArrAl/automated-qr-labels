@@ -12,7 +12,7 @@ import tkinter as tk
 
 import variableFile
 
-# (30)BAAMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
+# (30)AMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
 # (30)CRONO 30(21)NL0411.16(13)21-12-2020
 #'$3:$3,$3:$24,$3:$25'
 
@@ -364,7 +364,7 @@ class XlReadWrite:
         # TODO: change Column A and C for parameters selected by the user. Multiple parameters could be used
         '''
         
-        self.xlWorkbook.Worksheets('Sheet1').Unprotect(Password = variableFile.templatePass)
+        self.xlWorkbook.Worksheets('Sheet1').Unprotect(Password = variableFile.TEMPLATE_PASS)
         lastCol = chr(len(self.heads) + 96).upper()
         lastRow = self.dfValues.index[-1] + 3
         allCells = f'$A$3:${lastCol}${lastRow}' 
@@ -383,7 +383,7 @@ class XlReadWrite:
 
         self.manageDuplicates(lastCol)
 
-        self.xlWorkbook.Worksheets('Sheet1').Protect(Password = variableFile.templatePass)
+        self.xlWorkbook.Worksheets('Sheet1').Protect(Password = variableFile.TEMPLATE_PASS)
 
     def removeEmptyRows(self,lastCol):
         '''Removes empty rows from excel and df
@@ -413,7 +413,20 @@ class XlReadWrite:
         Function used to update the table on GUI
         # TODO: Finish this something like this: a.groupby(by=['Pump Type']).count()
         # TODO: Think how to map Lloyd's pump names with QR names
+        # NOTE: What if the pump is not in the pool of words?
+        # NOTE: Time for ML?
         '''
+        tempDf = self.dfValues.groupby(by = ['MODEL']).count()
+        tempDf.set_index(['MODEL'], drop = False, inplace = True)
+        # Creates new column on tempDf with the corresponding key on clientDf
+        for pump in tempDf['MODEL']:
+            for key in variableFile.PUMPS_MODELS.keys():
+                if pump in variableFile.PUMPS_MODELS[key]:
+                    tempDf.loc[pump,'KEY'] = key
+        
+        # NOTE: the sum will be place under the existing columns, not the CURRENT that is needed, check that
+        print(tempDf.groupby(by=['KEY']).sum())
+        # return tempDf.groupby(by=['KEY']).sum()
 
 class ClientRequest:
     '''Class that manages the reading and processing of the client requests
@@ -430,13 +443,6 @@ class ClientRequest:
         self.file = self.myParent.filePathEntry
         self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
         return self.clientXl[self.clientXl['Request'] != 0][['Pump Type','Request','Settings']]
-
-    
-    def checkXL(self,xlClass):
-        '''Checks if excel file is in use by the program.
-        Updated if excel is opened. 
-        '''
-        pass
     
     def checkDate(self):
         '''If excel is open, checks delivery date
@@ -446,21 +452,11 @@ class ClientRequest:
         '''
         date = re.search(r'\d{2}-\d{2}-\d{4}',str(self.file))
 
-    def createTable(self):
-        '''Creates tkinter table with equipment from client excel
-        First 3 columns (Model, Settings, Request) should be static
-        Done column filled with pumps in excel file. Updated with updateTable
-        '''
-        # TODO: use Treeview with no children to create a table in tkinter
-        # LINK: https://stackoverflow.com/questions/50625306/what-is-the-best-way-to-show-data-in-a-table-in-tkinter/50651988#50651988
 
-        pass
-
-    def updateTable(self,dataFrame):
+    def updateTable(self,dfCount,dfClient):
         '''Updates values on "Done" column
         Triggered by the ReadXlClass when DataFrame is updated.
         '''
-        # NOTE: TreeView set property to change value of item. 
         pass
 
     

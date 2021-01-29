@@ -682,7 +682,7 @@ class AnalyticsFrame(tk.Frame):
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
         # TODO: Implement table with analytics of current pumps
-        self.colNames = ['Model', 'Requested','Settings', 'Current']
+        self.colNames = ['Pump Type', 'Requested','Settings', 'Current']
         self.analTbl = self.createTable()
         
         self.requestsBar = tk.Scrollbar(self.analTblFrame)     
@@ -696,12 +696,13 @@ class AnalyticsFrame(tk.Frame):
     
     def createTable(self):
         '''Initiates tables with especific columns and widths
+        # LINK: https://stackoverflow.com/questions/50625306/what-is-the-best-way-to-show-data-in-a-table-in-tkinter/50651988#50651988
         '''
         requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings')
         for item in self.colNames:
             requestTable.heading(item, text = item)
         
-        requestTable.column('Model', width = 200)
+        requestTable.column('Pump Type', width = 200)
         requestTable.column('Requested', width = 100)
         requestTable.column('Settings', width = 160)
         requestTable.column('Current', width = 100)
@@ -711,20 +712,29 @@ class AnalyticsFrame(tk.Frame):
         '''Fills table with the request form from the client
         '''
         self.filePathEntry = self.myParent.returnFileClient()
-        tempDf = self.tableClientRequest.readExcel()
-        tempDf.replace({np.nan: ''}, inplace = True) 
+        self.clientExcelDf = self.tableClientRequest.readExcel()
+        self.clientExcelDf.replace({np.nan: ''}, inplace = True)
+        self.clientExcelDf['Current'] = 0 # Add new empty col for current devices
+        self.clientExcelDf.set_index(['Pump Type'], drop = False, inplace = True) # Set pump names as index of the clientDF 
+        tempDf = self.clientExcelDf 
         tag = None
         for row in range(0,tempDf.shape[0]):
             if row % 2 == 0:
                 tag = 'even'
             else:
                 tag = 'odd'
-            self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],''), tags = (tag,))
+            self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],tempDf.iloc[row,3]), tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
 
     def updateTable(self, dataFrameCount):
         '''Updates table using the dataFrameCount
         '''
+        # self.tableClientRequest.updateTable(dataFrameCount, self.clientExcelDf)
+        # NOTE: This will add another column with the sum() result, but it is not needed.
+        # NOTE: check pandas concat
+        merged = self.clientExcelDf(dataFrameCount, how = 'left', left_on = ['Pump Type'], right_on = ['MODEL'])
+
+        pass
         
 
 
