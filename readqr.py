@@ -412,8 +412,6 @@ class XlReadWrite:
     def returnCountDevices(self):
         '''Returns the current count of items on df by model
         Function used to update the table on GUI
-        # TODO: Finish this something like this: a.groupby(by=['Pump Type']).count()
-        # TODO: Think how to map Lloyd's pump names with QR names
         # NOTE: What if the pump is not in the pool of words?
         # NOTE: Time for ML?
         '''
@@ -429,7 +427,7 @@ class XlReadWrite:
                     tempDf.loc[pump,'KEY'] = key
         
         # Returns pandas series with the key count
-        return tempDf.groupby(by=['KEY'])['COUNT'].count()
+        return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
         
 
 class ClientRequest:
@@ -442,11 +440,14 @@ class ClientRequest:
     def readExcel(self):
         ''' Function that reads excel and inserts into a df
         Currently it follows the Lloyds template (See Lloyd's template)
-        Returns df with two columns, pump type and its requests which are not 0
+        Returns df with two columns, pump type and its requests which are greater than 0
         '''
         self.file = self.myParent.filePathEntry
         self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
-        return self.clientXl[self.clientXl['Request'] != 0][['Pump Type','Request','Settings']]
+        # return self.clientXl[self.clientXl['Request'] != 0][['Pump Type','Request','Settings']]
+
+        # If devices have different settings, the number in the table is total of same devices
+        return self.clientXl[self.clientXl['Request'] > 0].groupby('Pump Type')['Request'].sum().reset_index()
     
     def checkDate(self):
         '''If excel is open, checks delivery date
@@ -456,12 +457,11 @@ class ClientRequest:
         '''
         date = re.search(r'\d{2}-\d{2}-\d{4}',str(self.file))
 
-
-    def updateTable(self,dfCount,dfClient):
-        '''Updates values on "Done" column
-        Triggered by the ReadXlClass when DataFrame is updated.
-        '''
-        pass
+    # TODO: create methods to check pumps included
+    # For example: 
+    #       - If there are enough pumps of one type (be aware of duplicates): change color row table or similar
+    #       - Include total of pumps scanned
+    #       - Change color of last type of pump included
 
     
 

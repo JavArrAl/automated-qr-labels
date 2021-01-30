@@ -455,13 +455,21 @@ class ScanFrame(tk.Frame):
         return self.instFrame.processClass.dfValues
 
     def updateTable(self, dataFrameCount):
+        '''Callable function to update the table with the modified dataframe
+        '''
         self.analyticFrame.updateTable(dataFrameCount)
 
     def existsTable(self):
+        '''Checks if the user loaded a client request form
+        Allows the updating of the table
+        '''
         return self.analyticFrame.existsTable()
 
     def returnFrameCount(self):
-        return self.instFrame.processClass.returnCountDevices()           
+        '''Returns count in case the exel has some devices in it
+        '''
+        if variableFile.excelOpen.get(): # Only if excel exists
+            return self.instFrame.processClass.returnCountDevices()           
 
 
 class IntrusctLblFrame(tk.Frame):
@@ -688,7 +696,8 @@ class AnalyticsFrame(tk.Frame):
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
         # TODO: Implement table with analytics of current pumps
-        self.colNames = ['Pump Type', 'Requested','Settings', 'Current']
+        # self.colNames = ['Pump Type', 'Requested','Settings', 'Current']
+        self.colNames = ['Pump Type', 'Requested', 'Current']
         self.analTbl = self.createTable()
         
         self.requestsBar = tk.Scrollbar(self.analTblFrame)     
@@ -701,6 +710,9 @@ class AnalyticsFrame(tk.Frame):
         self.analTbl.pack(side = tk.LEFT, fill = 'x')    
 
     def existsTable(self):
+        '''Checks if the user loaded a client request form
+        Allows the updating of the table
+        '''
         if self.filePathEntry:
             return True
         else:
@@ -714,10 +726,10 @@ class AnalyticsFrame(tk.Frame):
         for item in self.colNames:
             requestTable.heading(item, text = item)
         
-        requestTable.column('Pump Type', width = 200)
-        requestTable.column('Requested', width = 100)
-        requestTable.column('Settings', width = 160)
-        requestTable.column('Current', width = 100)
+        requestTable.column('Pump Type', width = 250)
+        requestTable.column('Requested', width = 120)
+        # requestTable.column('Settings', width = 160)
+        requestTable.column('Current', width = 120)
         return requestTable
     
     def populateTableClient(self):
@@ -735,7 +747,8 @@ class AnalyticsFrame(tk.Frame):
                 tag = 'even'
             else:
                 tag = 'odd'
-            self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],tempDf.iloc[row,3]), tags = (tag,))
+            # self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],tempDf.iloc[row,3]), tags = (tag,))
+            self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2]), tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
         self.updateTable(self.myParent.returnFrameCount())
 
@@ -751,7 +764,8 @@ class AnalyticsFrame(tk.Frame):
                 tag = 'even'
             else:
                 tag = 'odd'
-            self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2],updatedDf.iloc[row,3]), tags = (tag,))
+            # self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2],updatedDf.iloc[row,3]), tags = (tag,))
+            self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2]), tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
         
 
