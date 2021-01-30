@@ -1,3 +1,5 @@
+![GitHub](https://img.shields.io/github/license/Aphi29/automated-qr-labels)
+
 # automated-qr-labels
 
 Automatic label generator including QR identification.
@@ -69,4 +71,5 @@ To process the scanned QR:
 - In order for this program to work it will need the folder `media` and `templates` where the images for the GUI and the template for the handover form are stored. These folders where not include in the github and should be manually included.
 
 ## License
-## Author
+
+MIT. Copyright (c) 2021 Javier Arranz
