@@ -21,7 +21,7 @@ To generate the labels
 5.	Generate labels.
 6.	Repeat as many times as needed.
 
-<img src="readmedia/maind_GUI.gif>
+<img src="readmedia/maind_GUI.gif">
 
 To process the scanned QR:
 
