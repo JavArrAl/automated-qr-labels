@@ -455,7 +455,13 @@ class ScanFrame(tk.Frame):
         return self.instFrame.processClass.dfValues
 
     def updateTable(self, dataFrameCount):
-        self.analyticFrame.updateTable(dataFrameCount)           
+        self.analyticFrame.updateTable(dataFrameCount)
+
+    def existsTable(self):
+        return self.analyticFrame.existsTable()
+
+    def returnFrameCount(self):
+        return self.instFrame.processClass.returnCountDevices()           
 
 
 class IntrusctLblFrame(tk.Frame):
@@ -692,7 +698,13 @@ class AnalyticsFrame(tk.Frame):
         self.analTblFrame.pack(side = tk.BOTTOM)
         self.analLbl.pack(fill = 'x')
         self.requestsBar.pack(side = tk.RIGHT, fill = 'y')
-        self.analTbl.pack(side = tk.LEFT, fill = 'x')     
+        self.analTbl.pack(side = tk.LEFT, fill = 'x')    
+
+    def existsTable(self):
+        if self.filePathEntry:
+            return True
+        else:
+            return False 
     
     def createTable(self):
         '''Initiates tables with especific columns and widths
@@ -725,6 +737,7 @@ class AnalyticsFrame(tk.Frame):
                 tag = 'odd'
             self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],tempDf.iloc[row,3]), tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
+        self.updateTable(self.myParent.returnFrameCount())
 
     def updateTable(self, dataFrameCount):
         '''Updates table using the dataFrameCount

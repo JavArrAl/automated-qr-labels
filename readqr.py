@@ -4,6 +4,7 @@ import datetime
 import os.path
 import shutil
 from ast import literal_eval
+import unicodedata
 
 import pandas as pd
 import numpy as np
@@ -228,16 +229,15 @@ class XlReadWrite:
                     self.xlHeadsAI.append(key[1:-1]) # removed first and last item corresponding to ()
         tempDict = self.excelValToDict(vals)
         self.dfValues = pd.DataFrame(tempDict)
-        # self.dfValues.dropna(how = 'all', inplace = True) # Deletes included NaN rows
-        #self.dfValues.append(tempDict, ignore_index = True)
-        # TODO: Finish this
-        self.parent.myParent.updateTable(self.returnCountDevices)
+        self.dfValues = self.dfValues.convert_dtypes() # Converts columns types to the corresponding dtypes
+        for col in self.dfValues.select_dtypes(include = 'string'):
+            self.dfValues[col] = self.dfValues[col].str.normalize('NFKD') # Normalises unicode to include whitespaces (instead of \xa0)       
 
     def excelValToDict(self,vals):
         '''Converts tuples from excel into a dictionary
         Columns correspond to excel head values
         '''
-        tempMap = map(list,zip(*vals)) # Transposes tuples with excel values
+        tempMap = map(list,zip(*vals)) # Transposes excel value tuples
         tempDict = dict(zip(self.heads,list(tempMap)))
         return tempDict
 
@@ -276,8 +276,9 @@ class XlReadWrite:
                 self.dfValues.iloc[modCell[0],modCell[1]] = readQR
             except IndexError: # If user modifies cell after last row, read excel again
                 self.readExcel()
-                pass
-        # TODO: after processing changes, trigger the table update (if exists)
+    # If client request files has been loaded, update the table
+        if self.parent.myParent.existsTable():
+            self.parent.myParent.updateTable(self.returnCountDevices())
     
     def deleteCell(self,read):
         '''Function that proccesses the deleting of a cell/Range of cells
@@ -416,7 +417,8 @@ class XlReadWrite:
         # NOTE: What if the pump is not in the pool of words?
         # NOTE: Time for ML?
         '''
-        tempDf = self.dfValues
+        tempDf = self.dfValues.copy()
+        tempDf['KEY'] = ''
         tempDf['COUNT'] = 0
         # tempDf.groupby(by = ['MODEL'])['COUNT'].count()
         tempDf.set_index(['MODEL'], drop = False, inplace = True)
