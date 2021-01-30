@@ -729,12 +729,17 @@ class AnalyticsFrame(tk.Frame):
     def updateTable(self, dataFrameCount):
         '''Updates table using the dataFrameCount
         '''
-        # self.tableClientRequest.updateTable(dataFrameCount, self.clientExcelDf)
-        # NOTE: This will add another column with the sum() result, but it is not needed.
-        # NOTE: check pandas concat
-        merged = self.clientExcelDf(dataFrameCount, how = 'left', left_on = ['Pump Type'], right_on = ['MODEL'])
-
-        pass
+        updatedDf = self.clientExcelDf.assign(Current = dataFrameCount)
+        updatedDf.replace({np.nan: 0}, inplace = True)
+        tag = None
+        self.analTbl.delete(*self.analTbl.get_children())
+        for row in range(0,updatedDf.shape[0]):
+            if row % 2 == 0:
+                tag = 'even'
+            else:
+                tag = 'odd'
+            self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2],updatedDf.iloc[row,3]), tags = (tag,))
+        self.analTbl.tag_configure('even', background = 'light sky blue')
         
 
 

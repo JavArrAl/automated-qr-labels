@@ -416,7 +416,9 @@ class XlReadWrite:
         # NOTE: What if the pump is not in the pool of words?
         # NOTE: Time for ML?
         '''
-        tempDf = self.dfValues.groupby(by = ['MODEL']).count()
+        tempDf = self.dfValues
+        tempDf['COUNT'] = 0
+        # tempDf.groupby(by = ['MODEL'])['COUNT'].count()
         tempDf.set_index(['MODEL'], drop = False, inplace = True)
         # Creates new column on tempDf with the corresponding key on clientDf
         for pump in tempDf['MODEL']:
@@ -424,9 +426,9 @@ class XlReadWrite:
                 if pump in variableFile.PUMPS_MODELS[key]:
                     tempDf.loc[pump,'KEY'] = key
         
-        # NOTE: the sum will be place under the existing columns, not the CURRENT that is needed, check that
-        print(tempDf.groupby(by=['KEY']).sum())
-        # return tempDf.groupby(by=['KEY']).sum()
+        # Returns pandas series with the key count
+        return tempDf.groupby(by=['KEY'])['COUNT'].count()
+        
 
 class ClientRequest:
     '''Class that manages the reading and processing of the client requests
