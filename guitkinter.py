@@ -415,7 +415,8 @@ class BannerFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
     
-        imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.jpg')
+        # imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.jpg')
+        imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.png')
         self.versionLbl = tk.Label(self,text = 'Version: 0.1')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
