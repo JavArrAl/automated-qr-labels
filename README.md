@@ -30,7 +30,7 @@ To process the scanned QR:
 
 Label template:
 
--	The label template must be a docx file, preferably in form of a table.
+-	The label template must be a docx file, formated as a table.
 -	The parameters to include must follow [Jinga2](https://github.com/pallets/jinja) formatting as it is based on [python-dox-template](https://github.com/elapouya/python-docx-template/blob/master/docs/index.rst) module.
 -	All QR images contained in the templates should be named as *DummyX* with X as the number of the table cell.
 -	The template should be limited to one page.
