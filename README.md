@@ -28,20 +28,20 @@ To process the scanned QR:
 
 ### Templates
 
-Label template:
+#### Label template:
 
 -	The label template must be a docx file, formated as a table.
--	The parameters to include must follow [Jinga2](https://github.com/pallets/jinja) formatting as it is based on [python-dox-template](https://github.com/elapouya/python-docx-template/blob/master/docs/index.rst) module.
+-	The parameters to include must follow [Jinga2](https://github.com/pallets/jinja) formatting as it is based on [python-docx-template](https://github.com/elapouya/python-docx-template/blob/master/docs/index.rst) module.
 -	All QR images contained in the templates should be named as *DummyX* with X as the number of the table cell.
 -	The template should be limited to one page.
 
-Excel data:
+#### Excel data:
 
 -	It must include headers.
 -	Start in cell **A:1**
 -	All the headers required to be in the QR must be in the variableFile.AI. If in AI but not in label, the date will be introduced in the QR but not in the label.
 
-Handover form:
+#### Handover form:
 
 -	Data must start at line 3, with line 2 as headers.
 -	Cell **B:1** must be the delivery date.
