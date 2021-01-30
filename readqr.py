@@ -19,8 +19,8 @@ import variableFile
 
 class WorkbookEvents:
     def OnSheetSelectionChange(self, *args):
-        '''Possible use to determine where the user is
-        Might be useful to check whether correcting of adding new lines
+        '''Saves value of selected cell
+        The previous value of the cell is restored if value read came from scanner
         '''
         variableFile.previousValue = args[1].Value
         
@@ -33,9 +33,7 @@ class WorkbookEvents:
         to save changes.
         Possible use to trigger format before closing
         '''
-        #if not win32.GetActiveObject('Excel.Application'): # Checks if excel is still running. 
         variableFile.excelOpen.set(tk.FALSE)
-        # TODO: when excelOpen set to FALSE change the GUI label to gray when corresponds
         pass
         
 
@@ -61,7 +59,7 @@ class XlReadWrite:
                 - Yes: Use that file
                 - No: Keep waiting until new file is opened
     '''
-    # TODO: when a file is closed, let the user know the file is no longer open
+
     def __init__(self,parentFrame):
         self.xl = None
         self.parent = parentFrame
@@ -72,6 +70,7 @@ class XlReadWrite:
         '''Attempt to open excel
         If not  open, launches excel.
         '''
+
         self.restartObjects()
         try:
             self.xl = win32.GetActiveObject('Excel.Application')
@@ -86,6 +85,7 @@ class XlReadWrite:
         '''Sets all win32 objects references to None
         This is redundant, but was necessary to check possible problems
         '''
+
         self.xl = None
         self.xlWorkbook = None
         self.xlWorkbookEvents = None
@@ -95,6 +95,7 @@ class XlReadWrite:
         Returns name of latest delivery date
         If name is "TEMPORAL REQUEST FORM" that file shoudl be used
         '''
+        
         lastDate = datetime.date(2000,1,1)
         lastName = None
         for wbName in wbNames:
@@ -161,6 +162,7 @@ class XlReadWrite:
     def selectWbActive(self,name):
         '''Sets the selected workbook as working workbook
         '''
+
         self.openXl()
         try:
             self.xlWorkbook = self.xl.Workbooks(name)
@@ -181,10 +183,7 @@ class XlReadWrite:
         The file is named as REQUEST FORM + DATE.
         The date is introduced by the user through GUI
         '''
-        # try:
-        #     self.xl = win32.GetActiveObject('Excel.Application')
-        # except:
-        #     self.xl = win32.Dispatch('Excel.Application')
+
         self.openXl()
 
         try:
@@ -265,7 +264,6 @@ class XlReadWrite:
             if tempList: # Only append values if list not empty            
                 self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
                 self.dfValues.replace({np.nan: None}, inplace = True)               
-                # self.formatExcel() # formats the dataframe to oder devices by model
             self.writeExcel()
         elif isDelete:
             self.deleteCell(literal_eval(readQR))
@@ -349,19 +347,15 @@ class XlReadWrite:
         finCell = '${}${}'.format(finCol,lastRow)
         cellRange = '{}:{}'.format(iniCell,finCell)
         # Restore last edited cell
-        # FIXME: The font and size of the previous value to be written on the cell has changed.
-        # It could be related with the excel license, check with proper internet.
         self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
         self.formatExcel()
     
     def formatExcel(self):
-        '''Function to groups all devices with same model together
-        # NOTE: Should the paramenters to order the list be selected by the user?
+        '''Function to group all devices with same model together
         After reading QR, check model based on AI
         Sort the dataframe. Return new index last row introduced
         Insert new row on the corresponding excel position with (Range.Insert method)
-        # LINK: https://docs.microsoft.com/en-us/office/vba/api/excel.range.insert
         # TODO: change Column A and C for parameters selected by the user. Multiple parameters could be used
         '''
         
@@ -413,12 +407,10 @@ class XlReadWrite:
         '''Returns the current count of items on df by model
         Function used to update the table on GUI
         # NOTE: What if the pump is not in the pool of words?
-        # NOTE: Time for ML?
         '''
         tempDf = self.dfValues.copy()
         tempDf['KEY'] = ''
         tempDf['COUNT'] = 0
-        # tempDf.groupby(by = ['MODEL'])['COUNT'].count()
         tempDf.set_index(['MODEL'], drop = False, inplace = True)
         # Creates new column on tempDf with the corresponding key on clientDf
         for pump in tempDf['MODEL']:
@@ -462,8 +454,6 @@ class ClientRequest:
     #       - If there are enough pumps of one type (be aware of duplicates): change color row table or similar
     #       - Include total of pumps scanned
     #       - Change color of last type of pump included
-
-    
 
 if __name__ == "__main__":
     root = tk.Tk()

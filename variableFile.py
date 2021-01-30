@@ -1,7 +1,8 @@
 import tkinter as tk
 
 
-
+# I know... it is a weak pass. It is not meant to be unhackeable.
+# The excel sheet is locked to avoid possible unwanted typos
 TEMPLATE_PASS = 12345
 
 AI = {

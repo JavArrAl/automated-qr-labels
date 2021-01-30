@@ -627,6 +627,7 @@ class IntrusctLblFrame(tk.Frame):
         messagebox.showerror('Wrong date',' Wrong date.\n\n Please insert a correct date')
     
     def fileExists(self):
+        # TODO: Finish this part, it is here but does not do anything
         messagebox.showwarning('File already exists', 'A file with that date already exists.\n\nPlease select another date or delete/rename the existing file')
     
     def selectWb(self):
