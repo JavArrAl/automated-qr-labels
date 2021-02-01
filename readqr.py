@@ -31,7 +31,6 @@ class WorkbookEvents:
     def OnBeforeClose(self, *args):
         '''Event before the workbook closes and before asking
         to save changes.
-        Possible use to trigger format before closing
         '''
         variableFile.excelOpen.set(tk.FALSE)
         pass
@@ -56,6 +55,10 @@ class XlReadWrite:
                     the template.
             - Select: The user can choose between the excel files
                     opened.
+    
+    A dataframe with all the pumps is created every time the excel
+    is updated. This is not the optimal way to do it, but it is necessary
+    to handle all possible changes not related with QR codes.
     '''
 
     def __init__(self,parentFrame):
@@ -65,8 +68,8 @@ class XlReadWrite:
         self.dirPath = os.path.expanduser('~\\Desktop\\REQUEST FORMS')
     
     def openXl(self):
-        '''Attempt to open excel
-        If not  open, launches excel.
+        '''Tries to open excel
+        Launches excel if not open.
         '''
         self.restartObjects()
         try:

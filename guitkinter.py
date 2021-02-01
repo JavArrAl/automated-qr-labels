@@ -29,7 +29,6 @@ tk
                     FolderFrame
                 GenerateFrame
             ScanFrame
-            CheckFrame
         BannerFrame
 '''
 
@@ -48,11 +47,9 @@ class MainNotebook(ttk.Notebook):
 
         self.labelFrame = LabelFrame(self)
         self.scanFrame = ScanFrame(self)
-        self.checkFrame = CheckFrame(self)
 
         self.add(self.labelFrame, text='Generator')
         self.add(self.scanFrame, text='Scanner')
-        self.add(self.checkFrame, text='Checker')
 
 # Classes related with Label Frame
 
@@ -283,7 +280,6 @@ class FileFrame(tk.Frame):
 class FolderFrame(tk.Frame):
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
-        #self.pack(fill='x', expand=True)
 
 
 class FilterFrame(tk.Frame):
@@ -416,7 +412,7 @@ class BannerFrame(tk.Frame):
         self.pack(fill='x', anchor = 'sw', )
     
         imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.jpg')
-        self.versionLbl = tk.Label(self,text = 'Version: 0.1')
+        self.versionLbl = tk.Label(self,text = 'Version: 1.0')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
         ## NOTE: Consider simply having an image with the specific size when everything is ready
@@ -444,7 +440,6 @@ class ScanFrame(tk.Frame):
         self.reqPumpFrame = ReqPumpFrame(self)
         self.analyticFrame = AnalyticsFrame(self)
 
-        # TODO: This does not look as it should. Format it correctly
         self.instFrame.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
         self.reqPumpFrame.pack(fill = tk.BOTH, expand = True)
         self.analyticFrame.pack(side = tk.BOTTOM, fill = tk.BOTH, expand = True)
@@ -660,11 +655,7 @@ class ReqPumpFrame(tk.LabelFrame):
         self.filePathEntryShort = tk.StringVar()
         self.filePathEntryShort.set('')
 
-        #self.lblFrame = tk.Frame(self)
         self.askFileFrame = tk.Frame(self)
-        # self.lblXlFile = tk.Label(
-        #     self.lblFrame,
-        #     text = 'Requested pumps excel')
         self.fileEntry = tk.Entry(
             self.askFileFrame,
             textvariable = self.filePathEntryShort,
@@ -673,10 +664,7 @@ class ReqPumpFrame(tk.LabelFrame):
             self.askFileFrame,
             text = 'Browse',
             command = lambda: self.fileBtw())
-
-        #self.lblFrame.pack(side = tk.TOP, anchor = tk.W)
         self.askFileFrame.pack(fill = 'both')
-        # self.lblXlFile.pack(fill = 'x')
         self.fileEntry.pack(side = tk.LEFT, padx = 5)
         self.browBtt.pack(side = tk.RIGHT, padx = 10)
 
@@ -707,7 +695,6 @@ class AnalyticsFrame(tk.LabelFrame):
         self.totDevCountLbl = tk.Label(self.analLblFrame, textvariable = self.totDevCount, font = ('bold',17))
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
-        # self.colNames = ['Pump Type', 'Requested','Settings', 'Current']
         self.colNames = ['Pump Type', 'Requested', 'Current']
         self.analTbl = self.createTable()
         
@@ -733,7 +720,6 @@ class AnalyticsFrame(tk.LabelFrame):
     
     def createTable(self):
         '''Initiates tables with especific columns and widths
-        # LINK: https://stackoverflow.com/questions/50625306/what-is-the-best-way-to-show-data-in-a-table-in-tkinter/50651988#50651988
         '''
         requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings')
         for item in self.colNames:
@@ -741,7 +727,6 @@ class AnalyticsFrame(tk.LabelFrame):
         
         requestTable.column('Pump Type', width = 260)
         requestTable.column('Requested', width = 130)
-        # requestTable.column('Settings', width = 160)
         requestTable.column('Current', width = 130)
         return requestTable
     
@@ -760,7 +745,6 @@ class AnalyticsFrame(tk.LabelFrame):
                 tag = 'even'
             else:
                 tag = 'odd'
-            # self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2],tempDf.iloc[row,3]), tags = (tag,))
             self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2]), tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
         self.updateTable(self.myParent.returnFrameCount())
@@ -779,25 +763,11 @@ class AnalyticsFrame(tk.LabelFrame):
                 tag = 'even'
             else:
                 tag = 'odd'
-            # self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2],updatedDf.iloc[row,3]), tags = (tag,))
             self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2]), tags = (tag,))
         self.totDevCount.set(updatedDf['Current'].sum())
         self.analTbl.tag_configure('even', background = 'light sky blue')
         self.analTbl.tag_configure('complete', background = 'lawn green')
-        
-
-
-class CheckFrame(tk.Frame):
-    def __init__(self,myParent):
-        tk.Frame.__init__(self,myParent)
-        self.pack(fill='both', expand=True)
-        self.tempLbl = tk.Label(self,
-            text = 'Site under construction',
-            font = 10,
-            highlightcolor='slate gray')
-        self.tempLbl.pack(fill='both',
-            padx = (10,10),
-            pady = (10,10))
+    
 
 
 if __name__ == "__main__":
