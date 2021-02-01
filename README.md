@@ -61,13 +61,18 @@ To process the scanned QR:
 -	Data must start at line 3, with line 2 as headers.
 -	Cell **B:1** must be the delivery date.
 -	The template should be locked except for the cells where data can be written. The password must be in `variableFile`.
--	To use the analytic tool:
-- The client request excel data should start at line 2.
--	There should be at least one column named: *Pump Type* and *Request*
 
 **Example handover template**
 
 <img src="readmedia/Example_HandoverForm.JPG">
+
+#### Request form template:
+
+To use the analytic tool:
+-   The client request excel data should start at line 2.
+-	There should be at least one column named: *Pump Type* and *Request*
+
+<img src="readmedia/Example_client_request.JPG">
 
 ## Limitations and improvement opportunties
 
