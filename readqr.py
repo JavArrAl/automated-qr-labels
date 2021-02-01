@@ -163,6 +163,7 @@ class XlReadWrite:
 
             if not os.path.isdir(self.dirPath):
                 os.mkdir(os.path.expanduser(self.dirPath))
+            # NOTE: folder template required to work
             source = os.path.join(os.path.dirname(__file__),'templates','REQUEST FORM TEMPLATE.xlsx')
             destiny = os.path.join(self.dirPath,name) 
             if not os.path.isfile(os.path.join(self.dirPath,name)):

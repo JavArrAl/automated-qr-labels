@@ -403,7 +403,11 @@ class BannerFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
     
-        imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.png')
+        # NOTE: change this folder and file to match your desired logo
+        try:
+            imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.jpg')
+        except:
+            print('Check media folder exists and it has the file indicated')
         self.versionLbl = tk.Label(self,text = 'Version: 1.0')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
@@ -509,7 +513,8 @@ class IntrusctLblFrame(tk.Frame):
         self.openButton = tk.Button(
             self.openFrame,
             text = 'Open',
-            command = lambda : self.openNewWb())
+            command = lambda : self.openNewWb(),
+            width = 6)
         self.openName = tk.Label(
             self.openFrame,
             textvariable = self.readyVar,
@@ -520,7 +525,8 @@ class IntrusctLblFrame(tk.Frame):
         self.newButton = tk.Button(
             self.newFrame,
             text = "New",
-            command = lambda : self.createNewWb())
+            command = lambda : self.createNewWb(),
+            width = 6)
         self.dayEntry = tk.Entry(
             self.dateVarsFrame,
             textvariable = self.dayVar,
@@ -540,7 +546,8 @@ class IntrusctLblFrame(tk.Frame):
         self.selectButton = tk.Button(
             self.selectFrame,
             text = 'Select',
-            command = lambda : self.selectWb())
+            command = lambda : self.selectWb(),
+            width = 6)
 
         self.selectList = ttk.Combobox(
             self.selectFrame,
@@ -652,7 +659,8 @@ class ReqPumpFrame(tk.LabelFrame):
         self.browBtt = tk.Button(
             self.askFileFrame,
             text = 'Browse',
-            command = lambda: self.fileBtw())
+            command = lambda: self.fileBtw(),
+            width = 6)
         self.askFileFrame.pack(fill = 'both')
         self.fileEntry.pack(side = tk.LEFT, padx = 5)
         self.browBtt.pack(side = tk.RIGHT, padx = 10)
