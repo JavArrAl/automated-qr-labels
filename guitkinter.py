@@ -503,10 +503,13 @@ class IntrusctLblFrame(tk.Frame):
         # In instFrame
         self.instLbl = tk.Label(
             self.instFrame,
-            text = 'Intructuions')
+            text = 'Instructions',
+            font='5',
+            pady = 5)
         self.instTxt = tk.Label(
             self.instFrame, 
-            text = 'To be completed')
+            text = variableFile.INSTRUCTIONS_SCAN,
+            pady = 5)
         # In menuFrame
         self.openFrame = tk.Frame(self.menuFrame) 
         
@@ -527,7 +530,7 @@ class IntrusctLblFrame(tk.Frame):
             textvariable = self.readyVar,
             font = 25,
             foreground = 'gray',
-            width = 200
+            width = 250
         )
         # newFrame
         self.newButton = tk.Button(
@@ -576,30 +579,26 @@ class IntrusctLblFrame(tk.Frame):
             width = 30)
 
         # Top level
-        self.instFrame.pack(side = tk.LEFT)
-        self.menuFrame.pack(side = tk.RIGHT, fill = tk.X)
+        self.instFrame.pack()
+        self.menuFrame.pack(fill = tk.X)
 
         # Mid level
         # instFrame
         self.instLbl.pack(side = tk.TOP)
         self.instTxt.pack(side = tk.BOTTOM)
         # menuFrame
-        # self.openFrame.pack(side = tk.TOP, fill = tk.BOTH)
-        # self.newFrame.pack(side = tk.LEFT,fill = tk.X)
-        # self.dateVarsFrame.pack(side = tk.RIGHT,fill = tk.X)
-        # self.selectFrame.pack(side = tk.BOTTOM)
 
-        self.openFrame.pack( fill = tk.X)
-        self.totalNewFrame.pack(fill = tk.X)
-        self.selectFrame.pack(fill = tk.X)
+        self.openFrame.pack(fill = tk.X,padx = 140, pady = 2)
+        self.totalNewFrame.pack(fill = tk.X,padx = 140, pady = 2)
+        self.selectFrame.pack(fill = tk.X, padx = 140, pady = 2)
         
         # Low level
         # open
         self.openButton.pack(side = tk.LEFT, padx = 10)
-        self.readLbl.pack()
+        self.readLbl.pack(side = tk.LEFT)
         # New
         self.newFrame.pack(side = tk.LEFT, fill = tk.X)
-        self.dateVarsFrame.pack(fill = tk.X, padx = 80)
+        self.dateVarsFrame.pack(side = tk.LEFT, fill = tk.X, padx = 60)
 
         self.newButton.pack(side = tk.LEFT, padx = 10)
         self.dayEntry.pack(side = tk.LEFT)
@@ -609,12 +608,8 @@ class IntrusctLblFrame(tk.Frame):
         self.yearEntry.pack(side = tk.LEFT)
         # Select
         self.selectButton.pack(side = tk.LEFT, padx = 10)
-        self.selectList.pack()
+        self.selectList.pack(side = tk.LEFT)
 
-
-        # self.readLbl.pack(fill = tk.BOTH)
-        # self.launchXl()
-    
     def openNewWb(self):
         filePath = filedialog.askopenfilename(
             title = "Select excel file",
@@ -637,8 +632,8 @@ class IntrusctLblFrame(tk.Frame):
         messagebox.showerror('Wrong date',' Wrong date.\n\n Please insert a correct date')
     
     def fileExists(self):
-        # TODO: Finish this part, it is here but does not do anything
-        messagebox.showwarning('File already exists', 'A file with that date already exists.\n\nPlease select another date or delete/rename the existing file')
+        messagebox.showwarning('File already exists', 'A file with that date already exists.\n\nPlease select another date or delete/rename the existing file \
+            \nYou could also open the file with the open function')
     
     def selectWb(self):
         if self.fileSelected:
@@ -658,7 +653,7 @@ class ReqPumpFrame(tk.LabelFrame):
     This file should contain the pumps requested by client
     '''
     def __init__(self, myParent):
-        tk.LabelFrame.__init__(self,myParent,text = 'Requested pumps excel')
+        tk.LabelFrame.__init__(self,myParent,text = 'Requested pumps Excel')
         self.myParent = myParent
         self.filePathEntry = tk.StringVar()
         self.filePathEntry.set('')
@@ -682,8 +677,8 @@ class ReqPumpFrame(tk.LabelFrame):
         #self.lblFrame.pack(side = tk.TOP, anchor = tk.W)
         self.askFileFrame.pack(fill = 'both')
         # self.lblXlFile.pack(fill = 'x')
-        self.fileEntry.pack(side = tk.LEFT)
-        self.browBtt.pack(side = tk.RIGHT)
+        self.fileEntry.pack(side = tk.LEFT, padx = 5)
+        self.browBtt.pack(side = tk.RIGHT, padx = 10)
 
     def fileBtw(self):
         # excel file browser
@@ -715,7 +710,6 @@ class AnalyticsFrame(tk.LabelFrame):
         # self.colNames = ['Pump Type', 'Requested','Settings', 'Current']
         self.colNames = ['Pump Type', 'Requested', 'Current']
         self.analTbl = self.createTable()
-        # TODO: Field with total pumps done so far
         
         self.requestsBar = tk.Scrollbar(self.analTblFrame)     
         self.requestsBar.config(command = self.analTbl.yview)

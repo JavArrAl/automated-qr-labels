@@ -14,8 +14,8 @@ import tkinter as tk
 import variableFile
 
 # (30)AMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
+# (30)BODYGUARD 121 KIT(21)21242770(13)22-12-2020(22)20468303
 # (30)CRONO 30(21)NL0411.16(13)21-12-2020
-#'$3:$3,$3:$24,$3:$25'
 
 class WorkbookEvents:
     def OnSheetSelectionChange(self, *args):
@@ -39,25 +39,23 @@ class WorkbookEvents:
 
 class XlReadWrite:
     '''Class that handles reading, cleaning, processing
-    of the open excel. It checks if the open workbook is 
-    the one designed as Handover form. Name should have been
-    previously agreed.
+    of the open excel. 
+    After the file has been open/created/selected the user
+    can start scanning devices. Every QR read is processed to
+    determine what parameters should be included in the excel.
+    The excel heads correspond to the AI included in the QR codes.
+    If the user modifies or inserts manualy a value, it wont be 
+    processed as QR (Except if it has an AI in brackets (AI))
+    
     WorkFlow:
-        - Workbook open?
-            - Yes: Do name matches pattern?
-                - Yes: Use that file
-                - No: Go to open file
-            - No: Go to folder, any name with temporal name?
-                - Yes: Open that file
-                - No: Check dates of files. Any one with an incoming date?
-                    - Yes: Open that file
-                    - No: Create a new file with temporal name
-
-    After the workbook is opened, if closed:
-        - Call checkExistXl. New app has been open?
-            - Yes: checkExistWorkbook. Workbook exists?
-                - Yes: Use that file
-                - No: Keep waiting until new file is opened
+        User options:
+            - Open: Opens any excel the user selects and
+                    reads its contents
+            - New: User indicates the date of delivery and
+                    the program creates a new file based on 
+                    the template.
+            - Select: The user can choose between the excel files
+                    opened.
     '''
 
     def __init__(self,parentFrame):
@@ -70,7 +68,6 @@ class XlReadWrite:
         '''Attempt to open excel
         If not  open, launches excel.
         '''
-
         self.restartObjects()
         try:
             self.xl = win32.GetActiveObject('Excel.Application')
@@ -85,39 +82,13 @@ class XlReadWrite:
         '''Sets all win32 objects references to None
         This is redundant, but was necessary to check possible problems
         '''
-
         self.xl = None
         self.xlWorkbook = None
         self.xlWorkbookEvents = None
-
-    def checkNameDate(self,wbNames):
-        '''Checks name file matches desired name
-        Returns name of latest delivery date
-        If name is "TEMPORAL REQUEST FORM" that file shoudl be used
-        '''
-        
-        lastDate = datetime.date(2000,1,1)
-        lastName = None
-        for wbName in wbNames:
-            tempName = re.search('TEMPORAL REQUEST FORM',wbName)
-            name = re.search('REQUEST FORM',wbName)
-            date = re.search(r'\d{2}.\d{2}.\d{2}',wbName)
-            if tempName:
-                return wbName, None
-            if name and date:
-                try:
-                    curDate = datetime.datetime.strptime(date.group(0),'%d.%m.%y').date()
-                    if curDate > lastDate: 
-                        lastDate = curDate
-                        lastName = wbName
-                except: # Possibly the file has a date not valid, skip that file
-                    continue
-        return lastName, lastDate
     
     def checkDate(self,date):
         '''Function that checks the date is valid
         '''
-
         dateRegx = re.compile(r'(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})')
         corrDate = re.search(dateRegx, date)
         if corrDate:
@@ -129,7 +100,6 @@ class XlReadWrite:
         '''Opens an excel file selected by the user
         That file will be the one to work with
         '''
-
         self.openXl()    
         try:
             self.xlWorkbook = self.xl.Workbooks.Open(filePath)
@@ -146,7 +116,6 @@ class XlReadWrite:
         '''Creates a list with all opened excel files
         This list corresponds to the values of combobox on GUI
         '''
-
         try:
             self.xl = win32.GetActiveObject('Excel.Application')
             if self.xl.Workbooks.Count == 0:
@@ -162,7 +131,6 @@ class XlReadWrite:
     def selectWbActive(self,name):
         '''Sets the selected workbook as working workbook
         '''
-
         self.openXl()
         try:
             self.xlWorkbook = self.xl.Workbooks(name)
@@ -183,7 +151,6 @@ class XlReadWrite:
         The file is named as REQUEST FORM + DATE.
         The date is introduced by the user through GUI
         '''
-
         self.openXl()
 
         try:
@@ -194,7 +161,7 @@ class XlReadWrite:
                 os.mkdir(os.path.expanduser(self.dirPath))
             source = os.path.join(os.path.dirname(__file__),'templates','REQUEST FORM TEMPLATE.xlsx')
             destiny = os.path.join(self.dirPath,name) 
-            try:
+            if not os.path.isfile(os.path.join(self.dirPath,name)):
                 shutil.copy(source, destiny)
                 self.xlWorkbook = self.xl.Workbooks.Open(destiny)
                 self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
@@ -202,9 +169,9 @@ class XlReadWrite:
                 self.parent.readyVar.set(name)
                 self.parent.readLbl.config(foreground = 'green')
                 self.xlWorkbook.Worksheets('Sheet1').Range('$B$1').Value = corrDate
-                variableFile.excelOpen.set(tk.TRUE) # NOTE: This could be done with events
+                variableFile.excelOpen.set(tk.TRUE)
                 self.readExcel()
-            except PermissionError:
+            else:
                 self.parent.fileExists()
         except ValueError:
             self.parent.wrognDate()
@@ -272,7 +239,7 @@ class XlReadWrite:
             modCell = self.multipleCellChange()
             try:
                 self.dfValues.iloc[modCell[0],modCell[1]] = readQR
-            except IndexError: # If user modifies cell after last row, read excel again
+            except (IndexError, AttributeError) as e: # If user modifies cell after last row, read excel again
                 self.readExcel()
     # If client request files has been loaded, update the table
         if self.parent.myParent.existsTable():
@@ -358,7 +325,6 @@ class XlReadWrite:
         Insert new row on the corresponding excel position with (Range.Insert method)
         # TODO: change Column A and C for parameters selected by the user. Multiple parameters could be used
         '''
-        
         self.xlWorkbook.Worksheets('Sheet1').Unprotect(Password = variableFile.TEMPLATE_PASS)
         lastCol = chr(len(self.heads) + 96).upper()
         lastRow = self.dfValues.index[-1] + 3
@@ -436,24 +402,8 @@ class ClientRequest:
         '''
         self.file = self.myParent.filePathEntry
         self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
-        # return self.clientXl[self.clientXl['Request'] != 0][['Pump Type','Request','Settings']]
-
         # If devices have different settings, the number in the table is total of same devices
         return self.clientXl[self.clientXl['Request'] > 0].groupby('Pump Type')['Request'].sum().reset_index()
-    
-    def checkDate(self):
-        '''If excel is open, checks delivery date
-        Delivery date written in excel file if not present
-        Changes the name of the excel file if it does not include date
-        Pop up message if date excel file (name, cell) and client excel do not match.
-        '''
-        date = re.search(r'\d{2}-\d{2}-\d{4}',str(self.file))
-
-    # TODO: create methods to check pumps included
-    # For example: 
-    #       - If there are enough pumps of one type (be aware of duplicates): change color row table or similar
-    #       - Include total of pumps scanned
-    #       - Change color of last type of pump included
 
 if __name__ == "__main__":
     root = tk.Tk()
