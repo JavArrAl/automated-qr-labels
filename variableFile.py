@@ -43,7 +43,8 @@ PUMPS_MODELS = {
 
 INSTRUCTIONS_SCAN = '1.- To create the handover form, first open/create/select the file.\n\
 2.- Once opened, go to the file and start scanning QR codes.\n\
-3.- To compare with the client request form, select the request excel file.\nIt will update in real time'
+3.- To compare with the client request form, select the request excel file.\n\
+Note: Excel will group devices by model and color duplicates in orange.'
 
 
 def init():

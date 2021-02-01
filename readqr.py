@@ -31,6 +31,7 @@ class WorkbookEvents:
     def OnBeforeClose(self, *args):
         '''Event before the workbook closes and before asking
         to save changes.
+        NOTE: THere will be a problem if the user does not close it
         '''
         variableFile.excelOpen.set(tk.FALSE)
         pass
@@ -366,6 +367,7 @@ class XlReadWrite:
     def manageDuplicates(self, lastCol):
         '''After updating Df find duplicates in pandas
         Color cells with excel.
+        # FIXME: If row not colored of a duplicate is deleted, the others will remain colored
         '''
         duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
         for item in duplicatesDevices:
@@ -376,6 +378,9 @@ class XlReadWrite:
         '''Returns the current count of items on df by model
         Function used to update the table on GUI
         # NOTE: What if the pump is not in the pool of words?
+        # FIXME: if there is just one row with values is opened/selected excel it will trigger TypeError.
+        # This problem wont update the table. With next item scanned it will update again.
+        # Probably related with how the first rows are managed with readExcel()
         '''
         tempDf = self.dfValues.copy()
         tempDf['KEY'] = ''

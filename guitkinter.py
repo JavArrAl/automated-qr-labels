@@ -411,7 +411,7 @@ class BannerFrame(tk.Frame):
         tk.Frame.__init__(self,myParent)
         self.pack(fill='x', anchor = 'sw', )
     
-        imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.jpg')
+        imgPath = os.path.join(os.path.dirname(__file__),'media','mtsHealth.png')
         self.versionLbl = tk.Label(self,text = 'Version: 1.0')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
@@ -450,7 +450,7 @@ class ScanFrame(tk.Frame):
     def returnReadDf(self):
         return self.instFrame.processClass.dfValues
 
-    def updateTable(self, dataFrameCount):
+    def updateTable(self, dataFrameCount = None):
         '''Callable function to update the table with the modified dataframe
         '''
         self.analyticFrame.updateTable(dataFrameCount)
@@ -640,7 +640,12 @@ class IntrusctLblFrame(tk.Frame):
     def closedFile(self,n,m,x):
         if variableFile.excelOpen.get() == False:
             self.readyVar.set('Open Excel')# Gets name of file
-            self.readLbl.config(foreground = 'gray')     
+            self.readLbl.config(foreground = 'gray')
+            try:
+                self.myParent.updateTable()
+            except:
+                pass
+
 
 
 class ReqPumpFrame(tk.LabelFrame):
@@ -747,11 +752,13 @@ class AnalyticsFrame(tk.LabelFrame):
                 tag = 'odd'
             self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2]), tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
-        self.updateTable(self.myParent.returnFrameCount())
+        self.updateTable(dataFrameCount = self.myParent.returnFrameCount())
 
     def updateTable(self, dataFrameCount):
         '''Updates table using the dataFrameCount
         '''
+        if isinstance(dataFrameCount, pd.Series): # Clear current column if excel file is closed.
+            self.clientExcelDf['Current'] = 0
         updatedDf = self.clientExcelDf.assign(Current = dataFrameCount)
         updatedDf.replace({np.nan: 0}, inplace = True)
         tag = None
