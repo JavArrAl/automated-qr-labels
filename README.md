@@ -1,4 +1,4 @@
-![GitHub](https://img.shields.io/github/license/Aphi29/automated-qr-labels)
+![GitHub](https://img.shields.io/github/license/JavArrAl/automated-qr-labels)
 
 # automated-qr-labels
 
