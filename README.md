@@ -68,7 +68,6 @@ To process the scanned QR:
 
 #### Request form template:
 
-To use the analytic tool:
 -   The client request excel data should start at line 2.
 -	There should be at least one column named: *Pump Type* and *Request*
 
