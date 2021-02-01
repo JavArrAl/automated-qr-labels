@@ -1,5 +1,9 @@
 import tkinter as tk
 
+'''File that contains all constants and global variables
+Modify/Update these values if the devices are different or
+new AI, Models, Instructions are needed.
+'''
 
 # I know... it is a weak pass. It is not meant to be unhackeable.
 # The excel sheet is locked to avoid possible unwanted typos
