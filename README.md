@@ -44,6 +44,9 @@ To process the scanned QR:
 -	The parameters to include must follow [Jinga2](https://github.com/pallets/jinja) formatting as it is based on [python-docx-template](https://github.com/elapouya/python-docx-template/blob/master/docs/index.rst) module.
 -	All QR images contained in the templates should be named as *DummyX* with X as the number of the table cell.
 -	The template should be limited to one page.
+- The template may include a different number of labels (e.g., 4,8,10...)
+
+**Example label template**
 
 <img src="readmedia/Label_template.JPG">
 
@@ -51,7 +54,7 @@ To process the scanned QR:
 
 -	It must include headers.
 -	Start in cell **A:1**
--	All the headers required to be in the QR must be in the `variableFile.AI`. If in AI but not in label, the date will be introduced in the QR but not in the label.
+-	All the headers required to be in the QR must be in the `variableFile.AI`. If any column in excel is not included in the label template, the data will be introduced in the QR but not in the label.
 
 #### Handover form:
 
@@ -61,6 +64,8 @@ To process the scanned QR:
 -	To use the analytic tool:
 - The client request excel data should start at line 2.
 -	There should be at least one column named: *Pump Type* and *Request*
+
+**Example handover template**
 
 <img src="readmedia/Example_HandoverForm.JPG">
 
