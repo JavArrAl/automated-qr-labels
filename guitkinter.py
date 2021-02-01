@@ -444,6 +444,7 @@ class ScanFrame(tk.Frame):
         self.reqPumpFrame = ReqPumpFrame(self)
         self.analyticFrame = AnalyticsFrame(self)
 
+        # TODO: This does not look as it should. Format it correctly
         self.instFrame.pack(side = tk.TOP, fill = tk.BOTH, expand = True)
         self.reqPumpFrame.pack(fill = tk.BOTH, expand = True)
         self.analyticFrame.pack(side = tk.BOTTOM, fill = tk.BOTH, expand = True)
@@ -508,9 +509,11 @@ class IntrusctLblFrame(tk.Frame):
             text = 'To be completed')
         # In menuFrame
         self.openFrame = tk.Frame(self.menuFrame) 
-        self.newFrame = tk.Frame(self.menuFrame)
+        
         self.selectFrame = tk.Frame(self.menuFrame)
-        self.dateVarsFrame = tk.Frame(self.newFrame)
+        self.totalNewFrame = tk.Frame(self.menuFrame)
+        self.newFrame = tk.Frame(self.totalNewFrame)
+        self.dateVarsFrame = tk.Frame(self.totalNewFrame)
 
         # Low level
         # openFrame
@@ -581,16 +584,23 @@ class IntrusctLblFrame(tk.Frame):
         self.instLbl.pack(side = tk.TOP)
         self.instTxt.pack(side = tk.BOTTOM)
         # menuFrame
-        self.openFrame.pack(side = tk.TOP, fill = tk.BOTH)
-        self.newFrame.pack(side = tk.LEFT,fill = tk.X)
-        self.dateVarsFrame.pack(side = tk.RIGHT,fill = tk.X)
-        self.selectFrame.pack(side = tk.BOTTOM)
+        # self.openFrame.pack(side = tk.TOP, fill = tk.BOTH)
+        # self.newFrame.pack(side = tk.LEFT,fill = tk.X)
+        # self.dateVarsFrame.pack(side = tk.RIGHT,fill = tk.X)
+        # self.selectFrame.pack(side = tk.BOTTOM)
+
+        self.openFrame.pack( fill = tk.X)
+        self.totalNewFrame.pack(fill = tk.X)
+        self.selectFrame.pack(fill = tk.X)
         
         # Low level
         # open
         self.openButton.pack(side = tk.LEFT, padx = 10)
         self.readLbl.pack()
         # New
+        self.newFrame.pack(side = tk.LEFT, fill = tk.X)
+        self.dateVarsFrame.pack(fill = tk.X, padx = 80)
+
         self.newButton.pack(side = tk.LEFT, padx = 10)
         self.dayEntry.pack(side = tk.LEFT)
         hyphonVar.pack(side = tk.LEFT)
@@ -643,33 +653,35 @@ class IntrusctLblFrame(tk.Frame):
             self.readLbl.config(foreground = 'gray')     
 
 
-class ReqPumpFrame(tk.Frame):
+class ReqPumpFrame(tk.LabelFrame):
     '''Frame with entry asking for the excel file
     This file should contain the pumps requested by client
     '''
     def __init__(self, myParent):
-        tk.Frame.__init__(self,myParent)
+        tk.LabelFrame.__init__(self,myParent,text = 'Requested pumps excel')
         self.myParent = myParent
         self.filePathEntry = tk.StringVar()
         self.filePathEntry.set('')
+        self.filePathEntryShort = tk.StringVar()
+        self.filePathEntryShort.set('')
 
-        self.lblFrame = tk.Frame(self)
+        #self.lblFrame = tk.Frame(self)
         self.askFileFrame = tk.Frame(self)
-        self.lblXlFile = tk.Label(
-            self.lblFrame,
-            text = 'Requested pumps excel')
+        # self.lblXlFile = tk.Label(
+        #     self.lblFrame,
+        #     text = 'Requested pumps excel')
         self.fileEntry = tk.Entry(
             self.askFileFrame,
-            textvariable = self.filePathEntry,
+            textvariable = self.filePathEntryShort,
             width = 80)
         self.browBtt = tk.Button(
             self.askFileFrame,
             text = 'Browse',
             command = lambda: self.fileBtw())
 
-        self.lblFrame.pack(side = tk.TOP, anchor = tk.W)
-        self.askFileFrame.pack(anchor = tk.W)
-        self.lblXlFile.pack(fill = 'x')
+        #self.lblFrame.pack(side = tk.TOP, anchor = tk.W)
+        self.askFileFrame.pack(fill = 'both')
+        # self.lblXlFile.pack(fill = 'x')
         self.fileEntry.pack(side = tk.LEFT)
         self.browBtt.pack(side = tk.RIGHT)
 
@@ -679,34 +691,40 @@ class ReqPumpFrame(tk.Frame):
                 title = "Select file",
                 filetypes = (('Excel file', '*.xlsx'), ('Excel file', '*.xls'), ('All files', '*.*'),))
         if self.filePathEntry:
+            self.filePathEntryShort = self.filePathEntry.split('/')[-1]
             self.fileEntry.delete(0,last = tk.END)
-            self.fileEntry.insert(0,self.filePathEntry)
+            self.fileEntry.insert(0,self.filePathEntryShort)
             self.myParent.analyticFrame.populateTableClient()
 
 
-class AnalyticsFrame(tk.Frame):
+class AnalyticsFrame(tk.LabelFrame):
     '''Frame containing the table with pumps
     requested and ready
     '''
     def __init__(self,myParent):
-        tk.Frame.__init__(self,myParent)
+        tk.LabelFrame.__init__(self,myParent, text = 'Requested and Current devices')
         self.myParent = myParent
+        self.totDevCount = tk.IntVar()
+        self.totDevCount.set(0)
         self.analLblFrame = tk.Frame(self)
         self.analTblFrame = tk.Frame(self)
-        self.analLbl = tk.Label(self.analLblFrame, text = 'Analytics')
+        self.totalDevices = tk.Label(self.analLblFrame, text = 'Total scanned devices:', font= 12, height = 3)
+        self.totDevCountLbl = tk.Label(self.analLblFrame, textvariable = self.totDevCount, font = ('bold',17))
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
-        # TODO: Implement table with analytics of current pumps
         # self.colNames = ['Pump Type', 'Requested','Settings', 'Current']
         self.colNames = ['Pump Type', 'Requested', 'Current']
         self.analTbl = self.createTable()
+        # TODO: Field with total pumps done so far
         
         self.requestsBar = tk.Scrollbar(self.analTblFrame)     
         self.requestsBar.config(command = self.analTbl.yview)
         
-        self.analLblFrame.pack(side = tk.TOP)
-        self.analTblFrame.pack(side = tk.BOTTOM)
-        self.analLbl.pack(fill = 'x')
+        self.analLblFrame.pack()
+        self.analTblFrame.pack()
+
+        self.totalDevices.pack(side = tk.LEFT)
+        self.totDevCountLbl.pack(side = tk.RIGHT)
         self.requestsBar.pack(side = tk.RIGHT, fill = 'y')
         self.analTbl.pack(side = tk.LEFT, fill = 'x')    
 
@@ -727,10 +745,10 @@ class AnalyticsFrame(tk.Frame):
         for item in self.colNames:
             requestTable.heading(item, text = item)
         
-        requestTable.column('Pump Type', width = 250)
-        requestTable.column('Requested', width = 120)
+        requestTable.column('Pump Type', width = 260)
+        requestTable.column('Requested', width = 130)
         # requestTable.column('Settings', width = 160)
-        requestTable.column('Current', width = 120)
+        requestTable.column('Current', width = 130)
         return requestTable
     
     def populateTableClient(self):
@@ -761,13 +779,17 @@ class AnalyticsFrame(tk.Frame):
         tag = None
         self.analTbl.delete(*self.analTbl.get_children())
         for row in range(0,updatedDf.shape[0]):
-            if row % 2 == 0:
+            if updatedDf.iloc[row,1] == updatedDf.iloc[row,2]: # Check requested number is complete
+                tag = 'complete'
+            elif row % 2 == 0:
                 tag = 'even'
             else:
                 tag = 'odd'
             # self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2],updatedDf.iloc[row,3]), tags = (tag,))
             self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2]), tags = (tag,))
+        self.totDevCount.set(updatedDf['Current'].sum())
         self.analTbl.tag_configure('even', background = 'light sky blue')
+        self.analTbl.tag_configure('complete', background = 'lawn green')
         
 
 
