@@ -25,7 +25,7 @@ To generate the labels
 
 <img src="readmedia/maind_GUI.gif">
 
-**Example of a finished template**
+**Example finished template**
 
 <img src="readmedia/Filled_template.JPG">
 
@@ -34,7 +34,7 @@ To process the scanned QR:
 1.	Open, Create or Select an excel file form to insert the data.
 2.	Optional: Insert the request form from the user to have live counting of parcels processed.
 
-**GIF scan QR needed.**
+<img src="readmedia/Scan Usage.gif">
 
 ### Templates
 
