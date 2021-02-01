@@ -29,10 +29,14 @@ tk
                     FolderFrame
                 GenerateFrame
             ScanFrame
+                instFrame
+                reqPumpFrame
+                analyticFrame
         BannerFrame
 '''
 
 class MainFrame(tk.Frame):
+    ''' Main frame class'''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.notebook = MainNotebook(self)
@@ -41,6 +45,7 @@ class MainFrame(tk.Frame):
 
 
 class MainNotebook(ttk.Notebook):
+    ''' Notebook class'''
     def __init__(self,myParent):
         ttk.Notebook.__init__(self,myParent)
         self.pack(fill ='both', expand = True)
@@ -54,19 +59,15 @@ class MainNotebook(ttk.Notebook):
 # Classes related with Label Frame
 
 class LabelFrame(tk.Frame):
-    '''
-    Frame that prensents and launche the main interface for Label creation
+    '''Frame that prensents and launche the main interface for Label creation
     It is divided in multiple frames to allow proper allocation within the Window frame
     '''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.instFrame = tk.Frame(self)
-        self.instLbl = tk.Label(self.instFrame,
-            text = 'Instructions',
-            justify = tk.LEFT,
-            font='5')
-        self.filtInstLbl = tk.Label(self.instFrame,
-            justify = tk.LEFT,
+        self.instLbl = tk.Label(self.instFrame, text = 'Instructions',
+                                justify = tk.LEFT, font='5')
+        self.filtInstLbl = tk.Label(self.instFrame, justify = tk.LEFT,
             text = '\t1.- Select an excel file with the devices information\n\
                 2.- Select a word document as a template for the labels.\n\
                     2.1- The template parameters should be included between double curly brackets: {{ Name_Filed }}\n\
@@ -75,13 +76,10 @@ class LabelFrame(tk.Frame):
                 5.- Select ONE value from the first table to filter by an specific excel column\n\
                 6.- Select as many values as needed from the second table\n')
         
-        self.instFrame.pack(side = 'top',
-            fill = 'both',
-            padx = (10,10),
-            pady = (10,10))
-        self.instLbl.pack(side = 'top',
-            fill='both',
-            anchor = 'w')
+        self.instFrame.pack(side = 'top', fill = 'both',
+                            padx = (10,10), pady = (10,10))
+        self.instLbl.pack(side = 'top', fill='both',
+                            anchor = 'w')
         self.filtInstLbl.pack(fill='both', side = 'bottom')
 
         self.xlFrame = ExcelFrame(self)
@@ -95,25 +93,23 @@ class LabelFrame(tk.Frame):
 
 
 class ExcelFrame(tk.Frame):
+    '''Class for the excel file section of the interface'''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
-        self.classFile = None # Reference barcd.py class created
+        self.classFile = None  # Reference barcd.py class created
         self.xlFile = FileFrame(
             self,0,'Select excel file',
             (('Excel file','*.xlsx'),('Excel file', '*.xls'),
             ('All files','*.*'),))
-        #self.filtFrame = FilterFrame(self)
-
-        self.pack(fill = 'x',
-            padx = (10,10),
-            pady = (10,10))
+        self.pack(fill = 'x', padx = (10,10), pady = (10,10))
     
     def storeClassFile(self,classFile):
         self.classFile = classFile
 
 
 class DocxFrame(tk.Frame):
+    '''Class for the template file section of the interface'''
     def __init__(self,myParent,xlClass):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
@@ -122,9 +118,7 @@ class DocxFrame(tk.Frame):
             self,1,'Select template file',
             (('word files','*.docx'),('All files','*.*'),),
             xlClass)
-        self.pack(fill='x',
-            padx = (10,10),
-            pady = (10,10))
+        self.pack(fill='x', padx = (10,10),pady = (10,10))
         self.filtFrame = FilterFrame(self)
 
     def storeClassFile(self,classFile):
@@ -132,6 +126,7 @@ class DocxFrame(tk.Frame):
 
 
 class GenerateFrame(tk.Frame):
+    '''Class for the generation section of the interface'''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.myParent = myParent
@@ -150,18 +145,12 @@ class GenerateFrame(tk.Frame):
             state = tk.DISABLED)
 
         self.pack(fill='x')
-        self.topFrame.pack(side = 'top',
-            fill = 'x')
-        self.botFrame.pack(side = 'bottom',
-            fill = 'x')
-        self.gnrLbl.pack(side = 'left',
-            anchor = 'w',
-            padx = (10,10),
-            pady = (10,10))
-        self.gnrBtt.pack(side = 'right',
-            anchor = 'w',
-            padx = (10,10),
-            pady = (10,10))
+        self.topFrame.pack(side = 'top', fill = 'x')
+        self.botFrame.pack(side = 'bottom', fill = 'x')
+        self.gnrLbl.pack(side = 'left', anchor = 'w',
+                        padx = (10,10), pady = (10,10))
+        self.gnrBtt.pack(side = 'right', anchor = 'w',
+                        padx = (10,10), pady = (10,10))
     
     def generateLbs(self):
         docxClass = self.getDocxClass()
@@ -176,7 +165,8 @@ class GenerateFrame(tk.Frame):
         return self.myParent.giveDocxClass()    
         
 class FileFrame(tk.Frame):
-    def __init__(self,myParent,classType,lblText,fileTypes,xlClass = None):
+    '''Class for the filter section of the interface'''
+    def __init__(self,myParent,classType,lblText,fileTypes,xlClass=None):
         tk.Frame.__init__(self,myParent)
         self.myParent = myParent
         self.classFile = None
@@ -218,7 +208,7 @@ class FileFrame(tk.Frame):
         self.errLbl.pack(side = 'bottom', fill = 'both')
 
     def fileBtw(self,classType,fileTypes,xlClass):
-        # excel file browser
+        ''' Excel file browse button'''
         self.filePath = filedialog.askopenfilename(title = "Select file",
             filetypes = fileTypes)
         self.file.delete(0,last = tk.END)
@@ -339,7 +329,7 @@ class FilterFrame(tk.Frame):
 
     def showFilter(self, filtVar):
         if filtVar:
-            self.myParent.granpa.xlFrame.classFile.filt = True # Activates the filter on barcd.py
+            self.myParent.granpa.xlFrame.classFile.filt = True  # Activates the filter on barcd.py
             self.filterOptions(filtVar)
             self.filtVar = False
         else:
@@ -348,7 +338,7 @@ class FilterFrame(tk.Frame):
             self.filtVar = True
             self.listValues.delete(0,tk.END)
 
-    def populateLists(self,smply = False):
+    def populateLists(self,smply=False):
         '''Creates lists of values to filter. Firts the possible excel columns
         then the values of the column selected.
         '''
@@ -356,7 +346,7 @@ class FilterFrame(tk.Frame):
         if not smply:
             self.params = self.myParent.granpa.xlFrame.classFile.returnColumns()
         if smply:
-            self.params = self.myParent.classFile.paramTmp # Template column parameters
+            self.params = self.myParent.classFile.paramTmp  # Template column parameters
         for param in self.params:
             self.listParms.insert(tk.END, param)              
 
@@ -370,25 +360,28 @@ class FilterFrame(tk.Frame):
         and uses it to present the values on listValues
         '''
         self.listValues.delete(0,tk.END)
-        self.filtCol = self.listParms.curselection()[0] # Index column read from template
+        self.filtCol = self.listParms.curselection()[0]  # Index column read from template
         self.values = self.myParent.granpa.xlFrame.classFile.returnValues(self.params[self.filtCol])
         self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
         for value in self.values:
             self.listValues.insert(tk.END, value)
         
     def choosenValue(self,event):
-        temp = list(self.listValues.curselection()) # Returns indexes
-        self.filtVal = [self.values[val] for val in temp] # Selected values from filt column
+        ''' Saves the values for the filter'''
+        temp = list(self.listValues.curselection())  # Returns indexes
+        self.filtVal = [self.values[val] for val in temp]  # Selected values from filt column
         self.myParent.granpa.xlFrame.classFile.setFilter(self.params[self.filtCol],self.filtVal)
         self.myParent.granpa.genFrame.gnrBtt['background'] = 'SystemButtonFace'
     
     def simplyFilter(self):
+        '''Filters data only with values present in the labels'''
         if self.stateSmpFilt.get():
             self.populateLists(True)
         elif not self.stateSmpFilt.get():
             self.populateLists()
         
     def filterOptions(self,filtVar):
+        '''Selects the method to fill the filter lists'''
         if filtVar:
             self.filterFrame.pack(side = 'right')
             self.populateLists()
@@ -401,8 +394,7 @@ class FilterFrame(tk.Frame):
 
 
 class BannerFrame(tk.Frame):
-    '''
-    Banner that includes:
+    '''Banner that includes:
     MTS logo
     Software version
     Software author
@@ -419,12 +411,10 @@ class BannerFrame(tk.Frame):
         self.img = Image.open(imgPath)
         self.img = self.img.resize((50,50),Image.ANTIALIAS)
         self.mtsImage = ImageTk.PhotoImage(self.img)
-        self.imgLbl = tk.Canvas(self,
-            height = 50,
-            width = 50)
-        self.imgLbl.create_image(25,
-            25,
-            image = self.mtsImage)
+        self.imgLbl = tk.Canvas(self, height = 50,
+                                width = 50)
+        self.imgLbl.create_image(25, 25,
+                                image = self.mtsImage)
         self.imgLbl.pack(side= 'left')
         self.authorLbl.pack(anchor = 'se', side= 'right')
         self.versionLbl.pack(side = 'bottom', anchor='s')
@@ -432,6 +422,7 @@ class BannerFrame(tk.Frame):
 #Classes related with ScanFrame
 
 class ScanFrame(tk.Frame):
+    '''Class corresponding to the Scan section interface'''
     def __init__(self,myParent):
         tk.Frame.__init__(self,myParent)
         self.pack(fill = 'both', expand = True)
@@ -450,7 +441,7 @@ class ScanFrame(tk.Frame):
     def returnReadDf(self):
         return self.instFrame.processClass.dfValues
 
-    def updateTable(self, dataFrameCount = None):
+    def updateTable(self, dataFrameCount=None):
         '''Callable function to update the table with the modified dataframe
         '''
         self.analyticFrame.updateTable(dataFrameCount)
@@ -518,36 +509,30 @@ class IntrusctLblFrame(tk.Frame):
         self.openButton = tk.Button(
             self.openFrame,
             text = 'Open',
-            command = lambda : self.openNewWb()
-        )
+            command = lambda : self.openNewWb())
         self.openName = tk.Label(
             self.openFrame,
             textvariable = self.readyVar,
             font = 25,
             foreground = 'gray',
-            width = 250
-        )
+            width = 250)
         # newFrame
         self.newButton = tk.Button(
             self.newFrame,
             text = "New",
-            command = lambda : self.createNewWb()
-        )
+            command = lambda : self.createNewWb())
         self.dayEntry = tk.Entry(
             self.dateVarsFrame,
             textvariable = self.dayVar,
-            width = 4
-        )
+            width = 4)
         self.monthEntry = tk.Entry(
             self.dateVarsFrame,
             textvariable = self.monthVar,
-            width = 4
-        )
+            width = 4)
         self.yearEntry = tk.Entry(
             self.dateVarsFrame,
             textvariable = self.yearVar,
-            width = 6
-        )
+            width = 6)
         hyphonVar  = tk.Label(self.dateVarsFrame,text = '-')
         hyphonVarDup  = tk.Label(self.dateVarsFrame,text = '-')
 
@@ -555,16 +540,14 @@ class IntrusctLblFrame(tk.Frame):
         self.selectButton = tk.Button(
             self.selectFrame,
             text = 'Select',
-            command = lambda : self.selectWb()
-        )
+            command = lambda : self.selectWb())
 
         self.selectList = ttk.Combobox(
             self.selectFrame,
             textvariable = self.fileSelected,
             values = self.processClass.fillXlOpenList(),
-            width = 25
-        )
-        self.selectList.bind('<FocusIn>',self.updateCombobox) # Updates the list when focused
+            width = 25)
+        self.selectList.bind('<FocusIn>',self.updateCombobox)  # Updates the list when focused
 
         self.readLbl = tk.Label(
             self.openFrame,
@@ -638,8 +621,9 @@ class IntrusctLblFrame(tk.Frame):
         self.selectList['values'] = self.processClass.fillXlOpenList()
 
     def closedFile(self,n,m,x):
+        '''When the excel file is to be closed, update table and label '''
         if variableFile.excelOpen.get() == False:
-            self.readyVar.set('Open Excel')# Gets name of file
+            self.readyVar.set('Open Excel')
             self.readLbl.config(foreground = 'gray')
             try:
                 self.myParent.updateTable()
@@ -674,7 +658,7 @@ class ReqPumpFrame(tk.LabelFrame):
         self.browBtt.pack(side = tk.RIGHT, padx = 10)
 
     def fileBtw(self):
-        # excel file browser
+        '''Excel file browser.'''
         self.filePathEntry = filedialog.askopenfilename(
                 title = "Select file",
                 filetypes = (('Excel file', '*.xlsx'), ('Excel file', '*.xls'), ('All files', '*.*'),))
@@ -724,8 +708,7 @@ class AnalyticsFrame(tk.LabelFrame):
             return False 
     
     def createTable(self):
-        '''Initiates tables with especific columns and widths
-        '''
+        '''Initiates tables with especific columns and widths'''
         requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings')
         for item in self.colNames:
             requestTable.heading(item, text = item)
@@ -736,8 +719,7 @@ class AnalyticsFrame(tk.LabelFrame):
         return requestTable
     
     def populateTableClient(self):
-        '''Fills table with the request form from the client
-        '''
+        '''Fills table with the request form from the client'''
         self.filePathEntry = self.myParent.returnFileClient()
         self.clientExcelDf = self.tableClientRequest.readExcel()
         self.clientExcelDf.replace({np.nan: ''}, inplace = True)
@@ -755,8 +737,7 @@ class AnalyticsFrame(tk.LabelFrame):
         self.updateTable(dataFrameCount = self.myParent.returnFrameCount())
 
     def updateTable(self, dataFrameCount):
-        '''Updates table using the dataFrameCount
-        '''
+        '''Updates table using the dataFrameCount '''
         if isinstance(dataFrameCount, pd.Series): # Clear current column if excel file is closed.
             self.clientExcelDf['Current'] = 0
         updatedDf = self.clientExcelDf.assign(Current = dataFrameCount)

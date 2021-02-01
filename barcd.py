@@ -40,6 +40,9 @@ class EmbeddedFileError(Exception):
 
 
 class XlFile:
+    '''Main class that creates an instance of the excel file.
+    Manipulates and returns the data within the excel file.
+    '''
     def __init__(self,pathFile):
         self.pathFile = pathFile # File path of the docx template
         self.filt = False
@@ -48,6 +51,7 @@ class XlFile:
         self.readFile()
   
     def readFile(self):
+        '''Reads excel file. Chooses intepreter depending on file format'''
         try:
             if self.pathFile.split('.')[-1] == 'xls': # Case not handled by openpyxl
                 self.xlData = pd.read_excel(self.pathFile)
@@ -57,8 +61,7 @@ class XlFile:
             raise WrongXlFile
     
     def selectColumns(self,xlParms =None):
-        '''
-        Receives the columns needed and returns those unique values.
+        ''' Receives the columns needed and returns those unique values.
         If filter is active, receives two argumens 'column' and 'value' from calling class
         Defined by user or 'Equimpent model' and 'BODYGUARD 323' by default
         Columns with Timestamp are filtered so they contain date only, formated as DD/MM/YY
@@ -78,10 +81,11 @@ class XlFile:
             return xlData
     
     def returnColumns(self):
+        '''Returns columns from excel file'''
         return list(self.xlData.columns)
     
     def returnValues(self,column):
-        #return list(set(self.xlData[column].dropna()))
+        '''Values from excel file'''
         return self.xlData[column].dropna().unique()
 
     def setFilter(self,column,values):
@@ -95,17 +99,21 @@ class XlFile:
     
 
 class DocxFile:
+    '''Main class for the docx files
+    This class includes all functions to manipulate the label templates
+    and to generate the QR codes.
+    '''
     def __init__(self,pathFile,xlClass):
-        self.nameFile = '' # Name file wich could correspond to the template copied files
-        self.pathFile = pathFile # File path of the docx template
-        self.paramTmp = [] # Parameters required to populate the template.
-        self.filt = False # Bolean to activate filter
-        self.xlFilt = '' # Column excel filter
-        self.xlFilVals = [] # Value to filter excel column selected
-        self.filtIndx = [] # Index of selected rows (with or without filter). Was used for QR images. Not in use atm
-        self.xlClass = xlClass # XlClass which handles unique excel file
+        self.nameFile = ''  # Name file wich could correspond to the template copied files
+        self.pathFile = pathFile  # File path of the docx template
+        self.paramTmp = []  # Parameters required to populate the template.
+        self.filt = False  # Bolean to activate filter
+        self.xlFilt = ''  # Column excel filter
+        self.xlFilVals = []  # Value to filter excel column selected
+        self.filtIndx = []  # Index of selected rows (with or without filter). Was used for QR images. Not in use atm
+        self.xlClass = xlClass  # XlClass which handles unique excel file
         self.dictKeys = []
-        self.context = [] # Dictionary with values to populatein the templates
+        self.context = []  # Dictionary with values to populatein the templates
         self.listQR = []
 
         if not xlClass:
@@ -113,6 +121,7 @@ class DocxFile:
         self.readDocx()
 
     def xlDataCaller(self):
+        '''Returns the values fetched by the excel class'''
         return self.xlClass.selectColumns(
             self.paramTmp)
 
@@ -150,8 +159,7 @@ class DocxFile:
         self.context = list(zip(self.dictKeys,self.xlDataCaller().to_numpy().flatten()))
     
     def labelGeneration(self,listQR,numTemp,numFiles,localContext,nameTmp = "Lloyd's template"):
-        '''Function that fills the template docxs
-        '''
+        '''Function that fills the template docxs'''
         self.readDocx()
         self.doc.render(localContext)
         i = 1
@@ -206,8 +214,7 @@ class DocxFile:
         self.listQR = []
 
     def createBarcode(self):
-        '''
-        Deprecated. Better use createQR.
+        ''' Deprecated. Better use createQR.
         Function that creates the QR codes
         '''
         for index,row in self.xlDataCaller().iterrows():

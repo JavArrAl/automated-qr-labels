@@ -18,6 +18,7 @@ import variableFile
 # (30)CRONO 30(21)NL0411.16(13)21-12-2020
 
 class WorkbookEvents:
+    '''Main class to define the interesting evens of the excel file'''
     def OnSheetSelectionChange(self, *args):
         '''Saves value of selected cell
         The previous value of the cell is restored if value read came from scanner
@@ -25,6 +26,7 @@ class WorkbookEvents:
         variableFile.previousValue = args[1].Value
         
     def OnSheetChange(self, *args):
+        '''Traces changes in excel sheet'''
         variableFile.addressChanged = args[1].Address
         variableFile.changedValue.set(str(args[1].Value))
     
@@ -69,9 +71,7 @@ class XlReadWrite:
         self.dirPath = os.path.expanduser('~\\Desktop\\REQUEST FORMS')
     
     def openXl(self):
-        '''Tries to open excel
-        Launches excel if not open.
-        '''
+        '''Tries to open excel. Launches excel if not open.'''
         self.restartObjects()
         try:
             self.xl = win32.GetActiveObject('Excel.Application')
@@ -79,7 +79,7 @@ class XlReadWrite:
             try:
                 self.xl = win32.Dispatch('Excel.Application')
             except:
-                self.parent.readyVar.set('Excel not available. Please make sure excel is installed')# Gets name of file
+                self.parent.readyVar.set('Excel not available. Please make sure excel is installed')
                 self.parent.readLbl.config(foreground = 'red')
     
     def restartObjects(self):
@@ -108,7 +108,7 @@ class XlReadWrite:
         try:
             self.xlWorkbook = self.xl.Workbooks.Open(filePath)
             self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
-            self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))# Gets name of file
+            self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))  # Gets name of file
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
             variableFile.excelOpen.set(tk.TRUE)
@@ -188,26 +188,25 @@ class XlReadWrite:
             self.values = self.xlWorkbook.Worksheets('Sheet1').UsedRange.Value
         except:
             print('No sheet called Sheet1')
-        self.heads = self.values[1] # Request form heads are in row 2
-        vals = self.values[2:] # Values start at row 3
+        self.heads = self.values[1]  # Request form heads are in row 2
+        vals = self.values[2:]  # Values start at row 3
         self.xlHeadsAI = []
-         # list with AIs corresponding to excel columns
          # FIXME: if the excel has a column that is not in AI variableFile it will be a problem
         for head in self.heads:
             for key in variableFile.AI.keys():
                 if head in variableFile.AI[key]:
-                    self.xlHeadsAI.append(key[1:-1]) # removed first and last item corresponding to ()
+                    self.xlHeadsAI.append(key[1:-1])  # removed first and last item corresponding to ()
         tempDict = self.excelValToDict(vals)
         self.dfValues = pd.DataFrame(tempDict)
-        self.dfValues = self.dfValues.convert_dtypes() # Converts columns types to the corresponding dtypes
+        self.dfValues = self.dfValues.convert_dtypes()  # Converts columns types to the corresponding dtypes
         for col in self.dfValues.select_dtypes(include = 'string'):
-            self.dfValues[col] = self.dfValues[col].str.normalize('NFKD') # Normalises unicode to include whitespaces (instead of \xa0)       
+            self.dfValues[col] = self.dfValues[col].str.normalize('NFKD')  # Normalises unicode to include whitespaces (instead of \xa0)       
 
     def excelValToDict(self,vals):
         '''Converts tuples from excel into a dictionary
         Columns correspond to excel head values
         '''
-        tempMap = map(list,zip(*vals)) # Transposes excel value tuples
+        tempMap = map(list,zip(*vals))  # Transposes excel value tuples
         tempDict = dict(zip(self.heads,list(tempMap)))
         return tempDict
 
@@ -219,39 +218,36 @@ class XlReadWrite:
         readQR = str(variableFile.changedValue.get())
         valsAI = [tuple(i.split(')')) for i in readQR.split('(')]
         tempList = []
-        try: # If multiple cells selected consider deleting
+        try:  # If multiple cells selected consider deleting
             isDelete = all(item is None for tup in literal_eval(readQR) for item in tup)
         except:
             isDelete = False
-        # creates a dictionary with QR AI and values
-        # Appends dictionary to df
         # NOTE: headsAI dependent on Excel column names. If not correct, wrong results.
-        if valsAI[0][0] == '' and not isDelete: # Input comes from QR
+        if valsAI[0][0] == '' and not isDelete:  # Input comes from QR
             for vals in valsAI:
                 for head in self.xlHeadsAI:
                     if vals[0] == head:
                         tempList.append((self.heads[self.xlHeadsAI.index(head)],vals[1]))
                         break
-            if tempList: # Only append values if list not empty            
+            if tempList:  # Only append values if list not empty            
                 self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
                 self.dfValues.replace({np.nan: None}, inplace = True)               
             self.writeExcel()
         elif isDelete:
             self.deleteCell(literal_eval(readQR))
             self.formatExcel()
-        else: # Update value introduced by user in dfValues
+        else:  # Update value introduced by user in dfValues
             modCell = self.multipleCellChange()
             try:
                 self.dfValues.iloc[modCell[0],modCell[1]] = readQR
-            except (IndexError, AttributeError) as e: # If user modifies cell after last row, read excel again
+            except (IndexError, AttributeError) as _:  # If user modifies cell after last row, read excel again
                 self.readExcel()
     # If client request files has been loaded, update the table
         if self.parent.myParent.existsTable():
             self.parent.myParent.updateTable(self.returnCountDevices())
     
     def deleteCell(self,read):
-        '''Function that proccesses the deleting of a cell/Range of cells
-        '''
+        '''Function that proccesses the deleting of a cell/Range of cells'''
         modCell = self.multipleCellChange()
         tempDict = self.excelValToDict(read)
         tempDf = pd.DataFrame(tempDict)
@@ -351,8 +347,7 @@ class XlReadWrite:
         self.xlWorkbook.Worksheets('Sheet1').Protect(Password = variableFile.TEMPLATE_PASS)
 
     def removeEmptyRows(self,lastCol):
-        '''Removes empty rows from excel and df
-        '''
+        '''Removes empty rows from excel and df'''
         wholeDfIndex = self.dfValues.index.to_list()
         nonNanDfIndex = self.dfValues.dropna(how = 'all').index.to_list()
         nanDfIndex = list(set(wholeDfIndex) - set(nonNanDfIndex))
