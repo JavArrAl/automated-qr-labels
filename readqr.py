@@ -367,7 +367,7 @@ class XlReadWrite:
     def manageDuplicates(self, lastCol):
         '''After updating Df find duplicates in pandas
         Color cells with excel.
-        # FIXME: If row not colored of a duplicate is deleted, the others will remain colored
+        # FIXME: If row of a duplicate not colored is deleted, the others will remain colored
         '''
         duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
         for item in duplicatesDevices:
