@@ -199,7 +199,8 @@ class XlReadWrite:
                     self.xlHeadsAI.append(key[1:-1])  # removed first and last item corresponding to ()
         tempDict = self.excelValToDict(vals)
         self.dfValues = pd.DataFrame(tempDict)
-        self.dfValues = self.dfValues.convert_dtypes()  # Converts columns types to the corresponding dtypes
+        if not self.dfValues.empty:
+            self.dfValues = self.dfValues.convert_dtypes()  # Converts columns types to the corresponding dtypes 
         for col in self.dfValues.select_dtypes(include = 'string'):
             self.dfValues[col] = self.dfValues[col].str.normalize('NFKD')  # Normalises unicode to include whitespaces (instead of \xa0)       
 
@@ -328,18 +329,20 @@ class XlReadWrite:
         '''
         self.xlWorkbook.Worksheets('Sheet1').Unprotect(Password = variableFile.TEMPLATE_PASS)
         lastCol = chr(len(self.heads) + 96).upper()
-        lastRow = self.dfValues.index[-1] + 3
-        allCells = f'$A$3:${lastCol}${lastRow}' 
+        #FIXME: if all values deleted, this will raise an error. Also, next value wont be formated properly.
+        if not self.dfValues.empty:
+            lastRow = self.dfValues.index[-1] + 3
+            allCells = f'$A$3:${lastCol}${lastRow}' 
 
-        self.removeEmptyRows(lastCol)
+            self.removeEmptyRows(lastCol)
 
-        # Excel sorting
-        self.xlWorkbook.Worksheets('Sheet1').Range(allCells).Sort(
-            Key1 = self.xlWorkbook.Worksheets('Sheet1').Range('$A$3'), # Model
-            Key2 = self.xlWorkbook.Worksheets('Sheet1').Range('$C$3'), # Date
-            Orientation = 1, #This should be 2, but seems to be wrong.
-            DataOption2 = 1 # Treats text as numeric
-        )
+            # Excel sorting
+            self.xlWorkbook.Worksheets('Sheet1').Range(allCells).Sort(
+                Key1 = self.xlWorkbook.Worksheets('Sheet1').Range('$A$3'), # Model
+                Key2 = self.xlWorkbook.Worksheets('Sheet1').Range('$C$3'), # Date
+                Orientation = 1, #This should be 2, but seems to be wrong.
+                DataOption2 = 1 # Treats text as numeric
+            )
 
         self.readExcel() # "Update" the data frame
 
@@ -366,9 +369,13 @@ class XlReadWrite:
         # FIXME: If row of a duplicate not colored is deleted, the others will remain colored
         '''
         duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
+        notDuplicated = self.dfValues[~self.dfValues.duplicated()].index.to_list()
         for item in duplicatesDevices:
             toColorRange = f'$A${item + 3}:${lastCol}${item + 3}'
             self.xlWorkbook.Worksheets('Sheet1').Range(toColorRange).Interior.ColorIndex = 44
+        for item in notDuplicated:
+            toColorRange = f'$A${item + 3}:${lastCol}${item + 3}'
+            self.xlWorkbook.Worksheets('Sheet1').Range(toColorRange).Interior.ColorIndex = 0
     
     def returnCountDevices(self):
         '''Returns the current count of items on df by model
@@ -381,15 +388,18 @@ class XlReadWrite:
         tempDf = self.dfValues.copy()
         tempDf['KEY'] = ''
         tempDf['COUNT'] = 0
-        tempDf.set_index(['MODEL'], drop = False, inplace = True)
+        try:
+            tempDf.set_index(['MODEL'], drop = False, inplace = True)
         # Creates new column on tempDf with the corresponding key on clientDf
-        for pump in tempDf['MODEL']:
-            for key in variableFile.PUMPS_MODELS.keys():
-                if pump in variableFile.PUMPS_MODELS[key]:
-                    tempDf.loc[pump,'KEY'] = key
-        
-        # Returns pandas series with the key count
-        return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
+            for pump in tempDf['MODEL']:
+                for key in variableFile.PUMPS_MODELS.keys():
+                    if pump in variableFile.PUMPS_MODELS[key]:
+                        tempDf.loc[pump,'KEY'] = key
+            
+            # Returns pandas series with the key count
+            return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
+        except:
+            return None
         
 
 class ClientRequest:
@@ -405,7 +415,11 @@ class ClientRequest:
         Returns df with two columns, pump type and its requests which are greater than 0
         '''
         self.file = self.myParent.filePathEntry
-        self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
+        if self.file.split('.')[-1] == 'xls': # Case not handled by openpyxl
+            self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
+        else:
+            self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H', engine='openpyxl')
+        # self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
         # If devices have different settings, the number in the table is total of same devices
         return self.clientXl[self.clientXl['Request'] > 0].groupby('Pump Type')['Request'].sum().reset_index()
 
