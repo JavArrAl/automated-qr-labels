@@ -231,7 +231,9 @@ class XlReadWrite:
                     if vals[0] == head:
                         tempList.append((self.heads[self.xlHeadsAI.index(head)],vals[1]))
                         break
-            if tempList:  # Only append values if list not empty            
+            if tempList:  # Only append values if list not empty       
+                if self.dfValues.empty:
+                    self.dfValues = pd.DataFrame(columns = self.heads)  #Make sure all columns are present in the df
                 self.dfValues = self.dfValues.append(dict(tempList),ignore_index = True)
                 self.dfValues.replace({np.nan: None}, inplace = True)               
             self.writeExcel()
@@ -253,11 +255,13 @@ class XlReadWrite:
         modCell = self.multipleCellChange()
         tempDict = self.excelValToDict(read)
         tempDf = pd.DataFrame(tempDict)
-        try:
-            self.dfValues.iloc[modCell[0],modCell[1]] = tempDf.values
-        except ValueError:
-            modCell = self.returnOverRange()   
-            self.dfValues.iloc[modCell[0],modCell[1]] = None
+        if not self.dfValues.empty:
+            try:
+                self.dfValues.iloc[modCell[0],modCell[1]] = tempDf.values
+            except ValueError:
+                modCell = self.returnOverRange()   
+                self.dfValues.iloc[modCell[0],modCell[1]] = None
+
         
     def returnOverRange(self):
         '''If selected range to delete is larger than the actual dataframe
@@ -305,10 +309,14 @@ class XlReadWrite:
             1.- Date of delivery
             2.- Column heads
         '''
-        try:
-            lastRow = self.dfValues.index[-1] + 3
-        except IndexError:
+        if self.dfValues.empty:
             lastRow = 3
+        else:
+            lastRow = self.dfValues.index[-1] + 3
+        # try:
+        #     lastRow = self.dfValues.index[-1] + 3
+        # except IndexError:
+        #     lastRow = 3
         # NaN replaced with None for empty cells in excel
         newRow = list(self.dfValues.iloc[-1].replace({np.nan: None}))  
         iniCell = '$A${}'.format(lastRow)
@@ -329,7 +337,6 @@ class XlReadWrite:
         '''
         self.xlWorkbook.Worksheets('Sheet1').Unprotect(Password = variableFile.TEMPLATE_PASS)
         lastCol = chr(len(self.heads) + 96).upper()
-        #FIXME: if all values deleted, this will raise an error. Also, next value wont be formated properly.
         if not self.dfValues.empty:
             lastRow = self.dfValues.index[-1] + 3
             allCells = f'$A$3:${lastCol}${lastRow}' 
@@ -366,7 +373,6 @@ class XlReadWrite:
     def manageDuplicates(self, lastCol):
         '''After updating Df find duplicates in pandas
         Color cells with excel.
-        # FIXME: If row of a duplicate not colored is deleted, the others will remain colored
         '''
         duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
         notDuplicated = self.dfValues[~self.dfValues.duplicated()].index.to_list()

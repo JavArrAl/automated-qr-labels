@@ -755,6 +755,8 @@ class AnalyticsFrame(tk.LabelFrame):
         for row in range(0,updatedDf.shape[0]):
             if updatedDf.iloc[row,1] == updatedDf.iloc[row,2]: # Check requested number is complete
                 tag = 'complete'
+            elif updatedDf.iloc[row,1] < updatedDf.iloc[row,2]:
+                tag = 'overcount'
             elif row % 2 == 0:
                 tag = 'even'
             else:
@@ -763,6 +765,7 @@ class AnalyticsFrame(tk.LabelFrame):
         self.totDevCount.set(updatedDf['Current'].sum())
         self.analTbl.tag_configure('even', background = 'light sky blue')
         self.analTbl.tag_configure('complete', background = 'lawn green')
+        self.analTbl.tag_configure('overcount', background = 'dark orange')
     
 
 
