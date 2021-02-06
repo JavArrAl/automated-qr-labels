@@ -394,19 +394,26 @@ class XlReadWrite:
         tempDf = self.dfValues.dropna(how = 'all').copy()
         keyList = []
         tempDf['COUNT'] = 0
-        try:
         # Creates new column on tempDf with the corresponding key on clientDf
-            for pump in tempDf['MODEL']:
-                for key in variableFile.PUMPS_MODELS.keys():
-                    if pump in variableFile.PUMPS_MODELS[key]:
-                        keyList.append(key)
-                        break
-            tempDf['KEY'] = keyList
+        for pump in tempDf['MODEL']:
+            plusOne = ''
+            for key in variableFile.PUMPS_MODELS.keys():
+                if pump in variableFile.PUMPS_MODELS[key]:
+                    plusOne = key
+                    break
+            if plusOne:
+                keyList.append(plusOne)
+            else:
+                keyList.append(None)
+
+        tempDf['KEY'] = keyList
 
             # Returns pandas series with the key count
-            return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
-        except:
-            return None
+        return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
+    
+    def returnCountTotalDevices(self):
+        '''Returns total devices scanned'''
+        return self.dfValues['MODEL'].count()
         
 
 class ClientRequest:

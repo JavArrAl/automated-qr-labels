@@ -460,7 +460,11 @@ class ScanFrame(tk.Frame):
         '''Returns count in case the exel has some devices in it
         '''
         if variableFile.excelOpen.get(): # Only if excel exists
-            return self.instFrame.processClass.returnCountDevices()           
+            return self.instFrame.processClass.returnCountDevices()
+
+    def returnCountTotalDevices(self):
+        '''Return total devices'''
+        return self.instFrame.processClass.returnCountTotalDevices()           
 
 
 class IntrusctLblFrame(tk.Frame):
@@ -688,25 +692,41 @@ class AnalyticsFrame(tk.LabelFrame):
     def __init__(self,myParent):
         tk.LabelFrame.__init__(self,myParent, text = 'Requested and Current devices')
         self.myParent = myParent
-        self.totDevCount = tk.IntVar()
-        self.totDevCount.set(0)
+        self.totDevCount = tk.StringVar()
+        self.totDevCountScanned = tk.IntVar()
+        self.totDevCount.set('0')
+        self.totDevCountScanned.set(0)
         self.analLblFrame = tk.Frame(self)
         self.analTblFrame = tk.Frame(self)
-        self.totalDevices = tk.Label(self.analLblFrame, text = 'Total scanned devices requested: ', font= ('normal', 15), height = 3)
-        self.totDevCountLbl = tk.Label(self.analLblFrame, textvariable = self.totDevCount, font = ('bold',15))
+        self.totDevFrame = tk.Frame(self)
+        self.totalDevices = tk.Label(
+            self.analLblFrame, text = 'Requested scanned devices: ',
+            font= ('normal', 15), height = 1)
+        self.totalDevicesScanned = tk.Label(
+            self.totDevFrame, text = 'Total scanned devices: ',
+            font= ('normal', 10), height = 1)
+        self.totDevCountLbl = tk.Label(
+            self.analLblFrame, textvariable = self.totDevCount,
+            font = ('bold',15),height = 1)
+        self.totDevCountScannedLbl = tk.Label(
+            self.totDevFrame, textvariable = self.totDevCountScanned,
+            font = ('bold',10), height = 1)
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
-        self.colNames = ['Pump Type', 'Requested', 'Current']
+        self.colNames = ['Pump Type', 'Request', 'Current']
         
         self.requestsBar = tk.Scrollbar(self.analTblFrame)
         self.analTbl = self.createTable()     
         self.requestsBar.config(command = self.analTbl.yview)
 
         self.analLblFrame.pack()
+        self.totDevFrame.pack(pady = 5)
         self.analTblFrame.pack()
 
         self.totalDevices.pack(side = tk.LEFT)
         self.totDevCountLbl.pack(side = tk.RIGHT)
+        self.totalDevicesScanned.pack(side = tk.LEFT)
+        self.totDevCountScannedLbl.pack(side = tk.RIGHT)
         self.requestsBar.pack(side = tk.RIGHT, fill = 'y')
         self.analTbl.pack(side = tk.LEFT, fill = 'x')    
 
@@ -721,12 +741,14 @@ class AnalyticsFrame(tk.LabelFrame):
     
     def createTable(self):
         '''Initiates tables with especific columns and widths'''
-        requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings', yscrollcommand = self.requestsBar.set)
+        requestTable = ttk.Treeview(
+            self.analTblFrame, columns = tuple(self.colNames),
+            show = 'headings', yscrollcommand = self.requestsBar.set)
         for item in self.colNames:
             requestTable.heading(item, text = item)
         
         requestTable.column('Pump Type', width = 260)
-        requestTable.column('Requested', width = 130)
+        requestTable.column('Request', width = 130)
         requestTable.column('Current', width = 130)
         return requestTable
     
@@ -744,7 +766,12 @@ class AnalyticsFrame(tk.LabelFrame):
                 tag = 'even'
             else:
                 tag = 'odd'
-            self.analTbl.insert('','end',values=(tempDf.iloc[row,0],tempDf.iloc[row,1],tempDf.iloc[row,2]), tags = (tag,))
+            self.analTbl.insert(
+                '','end',
+                values=(tempDf.iloc[row,0],
+                        tempDf.iloc[row,1],
+                        tempDf.iloc[row,2]),
+                tags = (tag,))
         self.analTbl.tag_configure('even', background = 'light sky blue')
         self.updateTable(dataFrameCount = self.myParent.returnFrameCount())
 
@@ -765,8 +792,16 @@ class AnalyticsFrame(tk.LabelFrame):
                 tag = 'even'
             else:
                 tag = 'odd'
-            self.analTbl.insert('','end',values=(updatedDf.iloc[row,0],updatedDf.iloc[row,1],updatedDf.iloc[row,2]), tags = (tag,))
-        self.totDevCount.set(updatedDf['Current'].sum())
+            self.analTbl.insert(
+                '','end',
+                values=(updatedDf.iloc[row,0],
+                        updatedDf.iloc[row,1],
+                        updatedDf.iloc[row,2]),
+                tags = (tag,))
+        devCount = f"{updatedDf['Current'].sum()}/{updatedDf['Request'].sum()}"
+        self.totDevCount.set(devCount)
+        if isinstance(dataFrameCount, pd.Series):
+            self.totDevCountScanned.set(self.myParent.returnCountTotalDevices())
         self.analTbl.tag_configure('even', background = 'light sky blue')
         self.analTbl.tag_configure('complete', background = 'lawn green')
         self.analTbl.tag_configure('overcount', background = 'dark orange')
