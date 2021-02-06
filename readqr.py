@@ -320,11 +320,8 @@ class XlReadWrite:
         finCell = '${}${}'.format(finCol,lastRow)
         cellRange = '{}:{}'.format(iniCell,finCell)
         # Restore last edited cell
-        # FIXME: if QR scanned over already written cell, previousvalue will be re-written with differnt font and color.
         self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
-        # self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Style = self.xlWorkbook.Styles('Normal')
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
-        # self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Style = self.xlWorkbook.Styles('Normal')
         self.formatExcel()
     
     def formatExcel(self):
@@ -390,8 +387,8 @@ class XlReadWrite:
         '''Returns the current count of items on df by model
         Function used to update the table on GUI
         # NOTE: What if the pump is not in the pool of words?
-        # FIXME: if there is just one row with values is opened/selected excel it will trigger TypeError.
-        # This problem wont update the table. With next item scanned it will update again.
+        # FIXME: if there is just one row with values in the opened/selected excel it will trigger TypeError.
+        # The table wont be updated until next pump is scanned.
         # Probably related with how the first rows are managed with readExcel()
         '''
         tempDf = self.dfValues.copy()
@@ -404,7 +401,6 @@ class XlReadWrite:
                 for key in variableFile.PUMPS_MODELS.keys():
                     if pump in variableFile.PUMPS_MODELS[key]:
                         tempDf.loc[pump,'KEY'] = key
-            
             # Returns pandas series with the key count
             return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
         except:
