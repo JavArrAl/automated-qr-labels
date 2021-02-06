@@ -350,9 +350,9 @@ class FilterFrame(tk.Frame):
         for param in self.params:
             self.listParms.insert(tk.END, param)              
 
-        self.barListValues.pack(side = 'right', fill = 'x')
+        self.barListValues.pack(side = 'right', fill = 'both')
         self.listValues.pack(side = 'right')
-        self.barListParms.pack(side = 'right', fill = 'x')
+        self.barListParms.pack(side = 'right', fill = 'both')
         self.listParms.pack(side = 'right')  
 
     def choosenColumn(self,event):
@@ -518,7 +518,7 @@ class IntrusctLblFrame(tk.Frame):
         self.openName = tk.Label(
             self.openFrame,
             textvariable = self.readyVar,
-            font = 8,
+            font = ('normal', 12),
             foreground = 'gray',
             width = 250)
         # newFrame
@@ -559,7 +559,7 @@ class IntrusctLblFrame(tk.Frame):
         self.readLbl = tk.Label(
             self.openFrame,
             textvariable = self.readyVar,
-            font = 8,
+            font = ('normal', 12),
             foreground = 'gray',
             width = 30)
 
@@ -630,6 +630,7 @@ class IntrusctLblFrame(tk.Frame):
     def closedFile(self,n,m,x):
         '''When the excel file is to be closed, update table and label '''
         if variableFile.excelOpen.get() == False:
+            self.processClass.saveExcel()
             self.readyVar.set('Open Excel')
             self.readLbl.config(foreground = 'gray')
             try:
@@ -691,16 +692,16 @@ class AnalyticsFrame(tk.LabelFrame):
         self.totDevCount.set(0)
         self.analLblFrame = tk.Frame(self)
         self.analTblFrame = tk.Frame(self)
-        self.totalDevices = tk.Label(self.analLblFrame, text = 'Total scanned devices:', font= 12, height = 3)
+        self.totalDevices = tk.Label(self.analLblFrame, text = 'Total scanned devices requested: ', font= ('normal', 15), height = 3)
         self.totDevCountLbl = tk.Label(self.analLblFrame, textvariable = self.totDevCount, font = ('bold',15))
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
         self.colNames = ['Pump Type', 'Requested', 'Current']
-        self.analTbl = self.createTable()
         
-        self.requestsBar = tk.Scrollbar(self.analTblFrame)     
+        self.requestsBar = tk.Scrollbar(self.analTblFrame)
+        self.analTbl = self.createTable()     
         self.requestsBar.config(command = self.analTbl.yview)
-        
+
         self.analLblFrame.pack()
         self.analTblFrame.pack()
 
@@ -720,7 +721,7 @@ class AnalyticsFrame(tk.LabelFrame):
     
     def createTable(self):
         '''Initiates tables with especific columns and widths'''
-        requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings')
+        requestTable = ttk.Treeview(self.analTblFrame, columns = tuple(self.colNames), show = 'headings', yscrollcommand = self.requestsBar.set)
         for item in self.colNames:
             requestTable.heading(item, text = item)
         

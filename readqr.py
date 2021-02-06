@@ -82,6 +82,10 @@ class XlReadWrite:
                 self.parent.readyVar.set('Excel not available. Please make sure excel is installed')
                 self.parent.readLbl.config(foreground = 'red')
     
+    def saveExcel(self):
+        '''Save excel file'''
+        self.xlWorkbook.Save()
+        
     def restartObjects(self):
         '''Sets all win32 objects references to None
         This is redundant, but was necessary to check possible problems
@@ -156,7 +160,6 @@ class XlReadWrite:
         The date is introduced by the user through GUI
         '''
         self.openXl()
-
         try:
             corrDate = self.checkDate(date)
             name = 'REQUEST FORM {}.xlsx'.format(corrDate)
@@ -388,7 +391,6 @@ class XlReadWrite:
         Function used to update the table on GUI
         # NOTE: What if the pump is not in the pool of words?
         '''
-
         tempDf = self.dfValues.dropna(how = 'all').copy()
         keyList = []
         tempDf['COUNT'] = 0
