@@ -174,6 +174,7 @@ class XlReadWrite:
                 self.parent.readyVar.set(name)
                 self.parent.readLbl.config(foreground = 'green')
                 self.xlWorkbook.Worksheets('Sheet1').Range('$B$1').Value = corrDate
+                self.xlWorkbook.Save()
                 variableFile.excelOpen.set(tk.TRUE)
                 self.readExcel()
             else:
@@ -310,22 +311,20 @@ class XlReadWrite:
             2.- Column heads
         '''
         if self.dfValues.empty:
-            lastRow = 3
+            self.formatExcel()
         else:
             lastRow = self.dfValues.index[-1] + 3
-        # try:
-        #     lastRow = self.dfValues.index[-1] + 3
-        # except IndexError:
-        #     lastRow = 3
-        # NaN replaced with None for empty cells in excel
         newRow = list(self.dfValues.iloc[-1].replace({np.nan: None}))  
         iniCell = '$A${}'.format(lastRow)
         finCol = chr(len(self.heads) + 96).upper()
         finCell = '${}${}'.format(finCol,lastRow)
         cellRange = '{}:{}'.format(iniCell,finCell)
         # Restore last edited cell
+        # FIXME: if QR scanned over already written cell, previousvalue will be re-written with differnt font and color.
         self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Value = variableFile.previousValue
+        # self.xlWorkbook.Worksheets('Sheet1').Range(variableFile.addressChanged).Style = self.xlWorkbook.Styles('Normal')
         self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Value = newRow
+        # self.xlWorkbook.Worksheets('Sheet1').Range(cellRange).Style = self.xlWorkbook.Styles('Normal')
         self.formatExcel()
     
     def formatExcel(self):
@@ -350,6 +349,7 @@ class XlReadWrite:
                 Orientation = 1, #This should be 2, but seems to be wrong.
                 DataOption2 = 1 # Treats text as numeric
             )
+            self.xlWorkbook.Worksheets('Sheet1').Range(allCells).Style = self.xlWorkbook.Styles('Normal')
 
         self.readExcel() # "Update" the data frame
 
@@ -374,8 +374,11 @@ class XlReadWrite:
         '''After updating Df find duplicates in pandas
         Color cells with excel.
         '''
-        duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
-        notDuplicated = self.dfValues[~self.dfValues.duplicated()].index.to_list()
+        dfNoNa = self.dfValues.dropna(how = 'all')  # In cell selected below last filled row
+        duplicatesDevices = dfNoNa[dfNoNa.duplicated()].index.to_list()
+        notDuplicated = dfNoNa[~dfNoNa.duplicated()].index.to_list()
+        # duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
+        # notDuplicated = self.dfValues[~self.dfValues.duplicated()].index.to_list()
         for item in duplicatesDevices:
             toColorRange = f'$A${item + 3}:${lastCol}${item + 3}'
             self.xlWorkbook.Worksheets('Sheet1').Range(toColorRange).Interior.ColorIndex = 44
