@@ -111,8 +111,8 @@ class XlReadWrite:
             self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))  # Gets name of file
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
-            variableFile.excelOpen.set(tk.TRUE)
-            self.readExcel()            
+            self.readExcel()      
+            variableFile.excelOpen.set(tk.TRUE)      
         except:
             self.parent.readyVar.set('ERROR opening excel. Contact support')       
          
@@ -142,8 +142,8 @@ class XlReadWrite:
             self.parent.readyVar.set(name)
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
-            variableFile.excelOpen.set(tk.TRUE)
             self.readExcel()
+            variableFile.excelOpen.set(tk.TRUE)
         except:
             self.parent.readyVar.set('Error with excel file. Please panic')
             self.parent.readLbl.config(foreground = 'red')
@@ -387,20 +387,20 @@ class XlReadWrite:
         '''Returns the current count of items on df by model
         Function used to update the table on GUI
         # NOTE: What if the pump is not in the pool of words?
-        # FIXME: if there is just one row with values in the opened/selected excel it will trigger TypeError.
-        # The table wont be updated until next pump is scanned.
-        # Probably related with how the first rows are managed with readExcel()
         '''
-        tempDf = self.dfValues.copy()
-        tempDf['KEY'] = ''
+
+        tempDf = self.dfValues.dropna(how = 'all').copy()
+        keyList = []
         tempDf['COUNT'] = 0
         try:
-            tempDf.set_index(['MODEL'], drop = False, inplace = True)
         # Creates new column on tempDf with the corresponding key on clientDf
             for pump in tempDf['MODEL']:
                 for key in variableFile.PUMPS_MODELS.keys():
                     if pump in variableFile.PUMPS_MODELS[key]:
-                        tempDf.loc[pump,'KEY'] = key
+                        keyList.append(key)
+                        break
+            tempDf['KEY'] = keyList
+
             # Returns pandas series with the key count
             return tempDf.groupby(by=['KEY'])['COUNT'].count().convert_dtypes()
         except:

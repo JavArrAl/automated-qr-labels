@@ -518,7 +518,7 @@ class IntrusctLblFrame(tk.Frame):
         self.openName = tk.Label(
             self.openFrame,
             textvariable = self.readyVar,
-            font = 25,
+            font = 8,
             foreground = 'gray',
             width = 250)
         # newFrame
@@ -559,7 +559,7 @@ class IntrusctLblFrame(tk.Frame):
         self.readLbl = tk.Label(
             self.openFrame,
             textvariable = self.readyVar,
-            font = 25,
+            font = 8,
             foreground = 'gray',
             width = 30)
 
@@ -636,6 +636,9 @@ class IntrusctLblFrame(tk.Frame):
                 self.myParent.updateTable()
             except:
                 pass
+        if variableFile.excelOpen.get() == True:
+            if self.myParent.existsTable():
+                self.myParent.updateTable(self.myParent.returnFrameCount())
 
 
 
@@ -689,7 +692,7 @@ class AnalyticsFrame(tk.LabelFrame):
         self.analLblFrame = tk.Frame(self)
         self.analTblFrame = tk.Frame(self)
         self.totalDevices = tk.Label(self.analLblFrame, text = 'Total scanned devices:', font= 12, height = 3)
-        self.totDevCountLbl = tk.Label(self.analLblFrame, textvariable = self.totDevCount, font = ('bold',17))
+        self.totDevCountLbl = tk.Label(self.analLblFrame, textvariable = self.totDevCount, font = ('bold',15))
         self.filePathEntry = None
         self.tableClientRequest = readqr.ClientRequest(self)
         self.colNames = ['Pump Type', 'Requested', 'Current']
