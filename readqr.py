@@ -13,10 +13,6 @@ import tkinter as tk
 
 import variableFile
 
-# (30)AMBIX ACTIV(21)21242770(13)22-12-2020(22)20468303
-# (30)BODYGUARD 121 KIT(21)21242770(13)22-12-2020(22)20468303
-# (30)CRONO 30(21)NL0411.16(13)21-12-2020
-
 class WorkbookEvents:
     '''Main class to define the interesting evens of the excel file'''
     def OnSheetSelectionChange(self, *args):
@@ -377,8 +373,6 @@ class XlReadWrite:
         dfNoNa = self.dfValues.dropna(how = 'all')  # In cell selected below last filled row
         duplicatesDevices = dfNoNa[dfNoNa.duplicated()].index.to_list()
         notDuplicated = dfNoNa[~dfNoNa.duplicated()].index.to_list()
-        # duplicatesDevices = self.dfValues[self.dfValues.duplicated()].index.to_list()
-        # notDuplicated = self.dfValues[~self.dfValues.duplicated()].index.to_list()
         for item in duplicatesDevices:
             toColorRange = f'$A${item + 3}:${lastCol}${item + 3}'
             self.xlWorkbook.Worksheets('Sheet1').Range(toColorRange).Interior.ColorIndex = 44
@@ -433,7 +427,6 @@ class ClientRequest:
             self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
         else:
             self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H', engine='openpyxl')
-        # self.clientXl = pd.read_excel(self.file, header = 1, usecols = 'B:H')
         # If devices have different settings, the number in the table is total of same devices
         return self.clientXl[self.clientXl['Request'] > 0].groupby('Pump Type')['Request'].sum().reset_index()
 

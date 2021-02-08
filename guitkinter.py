@@ -113,7 +113,7 @@ class DocxFrame(tk.Frame):
     def __init__(self,myParent,xlClass):
         tk.Frame.__init__(self,myParent)
         self.granpa = myParent
-        self.classFile = None # Reference barcd.py class created
+        self.classFile = None  # Reference barcd.py class created
         self.docxFile = FileFrame(
             self,1,'Select template file',
             (('word files','*.docx'),('All files','*.*'),),
@@ -161,7 +161,6 @@ class GenerateFrame(tk.Frame):
         self.gnrBtt['bg'] = 'pale green'
     
     def getDocxClass(self):
-        #Redundant
         return self.myParent.giveDocxClass()    
         
 class FileFrame(tk.Frame):
@@ -411,7 +410,6 @@ class BannerFrame(tk.Frame):
         self.versionLbl = tk.Label(self,text = 'Version: 1.0')
         self.authorLbl = tk.Label(self,text = 'By J.Arranz')
 
-        ## NOTE: Consider simply having an image with the specific size when everything is ready
         self.img = Image.open(imgPath)
         self.img = self.img.resize((50,50),Image.ANTIALIAS)
         self.mtsImage = ImageTk.PhotoImage(self.img)
@@ -459,7 +457,7 @@ class ScanFrame(tk.Frame):
     def returnFrameCount(self):
         '''Returns count in case the exel has some devices in it
         '''
-        if variableFile.excelOpen.get(): # Only if excel exists
+        if variableFile.excelOpen.get():  # Only if excel exists
             return self.instFrame.processClass.returnCountDevices()
 
     def returnCountTotalDevices(self):
@@ -757,8 +755,8 @@ class AnalyticsFrame(tk.LabelFrame):
         self.filePathEntry = self.myParent.returnFileClient()
         self.clientExcelDf = self.tableClientRequest.readExcel()
         self.clientExcelDf.replace({np.nan: ''}, inplace = True)
-        self.clientExcelDf['Current'] = 0 # Add new empty col for current devices
-        self.clientExcelDf.set_index(['Pump Type'], drop = False, inplace = True) # Set pump names as index of the clientDF 
+        self.clientExcelDf['Current'] = 0  # Add new empty col for current devices
+        self.clientExcelDf.set_index(['Pump Type'], drop = False, inplace = True)  # Set pump names as index of the clientDF 
         tempDf = self.clientExcelDf 
         tag = None
         for row in range(0,tempDf.shape[0]):
