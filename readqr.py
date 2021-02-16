@@ -107,7 +107,7 @@ class XlReadWrite:
         self.openXl()    
         try:
             self.xlWorkbook = self.xl.Workbooks.Open(filePath)
-            self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook,WorkbookEvents)
+            self.xlWorkbookEvents = win32.WithEvents(self.xlWorkbook, WorkbookEvents)
             self.parent.readyVar.set('{}'.format(filePath.split('/')[-1]))  # Gets name of file
             self.parent.readLbl.config(foreground = 'green')
             self.xl.Visible = True
