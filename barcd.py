@@ -78,7 +78,7 @@ class XlFile:
         if xlParms:
             return xlData[xlParms].dropna(subset = xlParms)
         elif not xlParms:
-            return xlData
+            return xlData.dropna(how = 'all')
     
     def returnColumns(self):
         '''Returns columns from excel file'''
